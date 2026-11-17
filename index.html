@@ -103,8 +103,6 @@
 
         <h1 class="scrolly-title">Project 1</h1>
 
-        <div class="scrolly-divider"></div>
-
       </div>
 
       <div class="scrolly-steps">
@@ -133,30 +131,130 @@
       </div>
 
     </div>
+    
   </template>
 
   <template id="template-project-2">
-    <div class="slide-content">
-      <h1>Project 2</h1>
-      <p>Project description goes here.</p>
-      <div class="svg-placeholder">SVG / IMAGE</div>
-    </div>
+      <div class="split-story">
+
+        <div class="split-visual">
+
+          <svg class="split-layer layer-1" viewBox="0 0 1000 600" preserveAspectRatio="none">
+            <rect width="1000" height="600" fill="#dcd2f0"/>
+            <circle cx="500" cy="300" r="100" fill="#f27e68"/>
+          </svg>
+
+          <svg class="split-layer layer-2" viewBox="0 0 1000 600" preserveAspectRatio="none">
+            <rect width="1000" height="600" fill="#f1e3aa"/>
+            <rect x="350" y="200" width="300" height="200" fill="#5277d9"/>
+          </svg>
+
+          <svg class="split-layer layer-3" viewBox="0 0 1000 600" preserveAspectRatio="none">
+            <rect width="1000" height="600" fill="#b9dfcb"/>
+            <polygon points="500,150 650,450 350,450" fill="#8055b9"/>
+          </svg>
+
+        </div>
+
+        <div class="split-steps">
+          <div class="split-step"></div>
+          <div class="split-step"></div>
+          <div class="split-step"></div>
+        </div>
+
+      </div>
+    
+    
   </template>
 
   <template id="template-project-3">
-    <div class="slide-content">
-      <h1>Project 3</h1>
-      <p>Project description goes here.</p>
-      <div class="svg-placeholder">SVG / IMAGE</div>
-    </div>
+    
+      <div class="motion-story">
+
+        <div class="motion-visual">
+
+          <svg viewBox="0 0 1000 600"
+              class="motion-svg"
+              preserveAspectRatio="xMidYMid meet">
+
+            <circle class="motion-circle circle-1"
+                    cx="100" cy="200" r="45"
+                    fill="#f27e68"/>
+
+            <circle class="motion-circle circle-2"
+                    cx="100" cy="300" r="45"
+                    fill="#5277d9"/>
+
+            <circle class="motion-circle circle-3"
+                    cx="100" cy="400" r="45"
+                    fill="#8055b9"/>
+
+          </svg>
+
+        </div>
+
+        <div class="motion-steps">
+          <div class="motion-step"></div>
+          <div class="motion-step"></div>
+        </div>
+
+      </div>
+    
+    
   </template>
 
   <template id="template-misc">
-    <div class="slide-content">
-      <h1>Misc</h1>
-      <p>Other experiments, ideas and miscellaneous work.</p>
-      <div class="svg-placeholder">SVG / IMAGE</div>
-    </div>
+
+      <div class="zoom-story">
+
+        <div class="zoom-visual">
+
+          <svg class="zoom-svg"
+              viewBox="0 0 1000 600"
+              preserveAspectRatio="xMidYMid meet">
+
+            <g class="zoom-world">
+
+              <!-- Main rectangle -->
+              <rect x="400" y="250"
+                    width="200" height="100"
+                    fill="#5277d9"
+                    stroke="#ffffff"
+                    stroke-width="3"/>
+
+              <!-- Circles inside the rectangle -->
+              <circle cx="430" cy="280" r="8"
+                      fill="#f27e68"/>
+
+              <circle cx="480" cy="300" r="8"
+                      fill="#f1e3aa"/>
+
+              <circle cx="530" cy="275" r="8"
+                      fill="#8055b9"/>
+
+              <circle cx="570" cy="325" r="8"
+                      fill="#b9dfcb"/>
+
+              <circle cx="450" cy="330" r="8"
+                      fill="#ffffff"/>
+
+              <circle cx="550" cy="300" r="8"
+                      fill="#f27e68"/>
+
+            </g>
+
+          </svg>
+
+        </div>
+
+        <div class="zoom-steps">
+          <div class="zoom-step"></div>
+          <div class="zoom-step"></div>
+          <div class="zoom-step"></div>
+        </div>
+
+      </div>
+    
   </template>
 
 </div>

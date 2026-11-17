@@ -24,19 +24,19 @@ const slides = [
     title: "Project 2",
     bg: "#d8dce5",
     template: "template-project-2",
-    type: "standard"
+    type: "scrolly"
   },
   {
     title: "Project 3",
     bg: "#e5d9d9",
     template: "template-project-3",
-    type: "standard"
+    type: "scrolly"
   },
   {
     title: "Misc",
     bg: "#dcdcdc",
     template: "template-misc",
-    type: "standard"
+    type: "scrolly"
   }
 ];
 
@@ -89,8 +89,36 @@ function renderSlide(element, index) {
   );
 
   if (slide.type === "scrolly") {
-    initializeScrolly(element);
+
+  switch (slide.title) {
+
+    case "Project 1":
+      initializeScrolly(element);
+      break;
+
+    case "Project 2":
+      initializeSplitScrolly(element);
+      break;
+
+    case "Project 3":
+      initializeMotionScrolly(element);
+      break;
+
+    case "Misc":
+      initializeZoomScrolly(element);
+      break;
+
   }
+}
+
+console.log(
+  slide.title,
+  "Scroll height:", element.scrollHeight,
+  "Client height:", element.clientHeight,
+  "Scrollable:", element.scrollHeight > element.clientHeight
+);
+
+  
 }
 
 function resetSlideScroll() {
@@ -101,17 +129,8 @@ function resetSlideScroll() {
       element.scrollTop = 0;
       element.scrollLeft = 0;
 
-      const story = element.querySelector(
-        ".scrolly-story"
-      );
-
-      if (story) {
-        story.scrollTop = 0;
-      }
-
     }
   );
-
 }
 
 /* ==========================================
@@ -435,6 +454,169 @@ function initializeScrolly(slideElement) {
   updateScrolly();
 }
 
+function initializeSplitScrolly(slideElement) {
+
+  const visual = slideElement.querySelector(".split-visual");
+  const layers = visual.querySelectorAll(".split-layer");
+
+  const update = () => {
+
+    const vh = slideElement.clientHeight;
+    const scroll = slideElement.scrollTop;
+
+    // Determine current transition
+    const index = Math.min(
+      Math.floor(scroll / vh),
+      layers.length - 2
+    );
+
+    // Progress through current transition
+    const progress = Math.min(
+      1,
+      Math.max(0, (scroll - index * vh) / vh)
+    );
+
+    // Hide all layers
+    layers.forEach(layer => {
+      layer.style.clipPath = "inset(0 0 100% 0)";
+      layer.style.zIndex = 0;
+    });
+
+    // Current screen
+    layers[index].style.clipPath = "inset(0)";
+    layers[index].style.zIndex = 1;
+
+    // Next screen: reveal from bottom upwards
+    layers[index + 1].style.clipPath =
+      `inset(${(1 - progress) * 100}% 0 0 0)`;
+
+    layers[index + 1].style.zIndex = 2;
+  };
+
+  slideElement.addEventListener("scroll", update, {
+    passive: true
+  });
+
+  update();
+}
+
+function initializeMotionScrolly(slideElement) {
+
+  const svg = slideElement.querySelector(".motion-svg");
+
+  const circles = [
+    svg.querySelector(".circle-1"),
+    svg.querySelector(".circle-2"),
+    svg.querySelector(".circle-3")
+  ];
+
+  // MODIFY THESE VALUES TO CHANGE FINAL POSITIONS.
+  // Coordinates correspond to the SVG viewBox (1000 x 600).
+
+  const startPositions = [
+    { x: 100, y: 200 },
+    { x: 100, y: 300 },
+    { x: 100, y: 400 }
+  ];
+
+  const endPositions = [
+    { x: 800, y: 120 },
+    { x: 650, y: 300 },
+    { x: 800, y: 480 }
+  ];
+
+  const update = () => {
+
+    const vh = slideElement.clientHeight;
+
+    const progress = Math.max(0, Math.min(
+      1,
+      slideElement.scrollTop / vh
+    ));
+
+    circles.forEach((circle, i) => {
+
+      const start = startPositions[i];
+      const end = endPositions[i];
+
+      const x = start.x + (end.x - start.x) * progress;
+      const y = start.y + (end.y - start.y) * progress;
+
+      circle.setAttribute("cx", x);
+      circle.setAttribute("cy", y);
+
+    });
+
+  };
+
+  slideElement.addEventListener("scroll", update, {
+    passive: true
+  });
+
+  update();
+}
+
+function initializeZoomScrolly(slideElement) {
+
+  const svg = slideElement.querySelector(".zoom-svg");
+  const world = svg.querySelector(".zoom-world");
+
+  const MAX_ZOOM = 12;
+
+  // SVG viewBox dimensions
+  const svgWidth = 1000;
+  const svgHeight = 600;
+
+  // MODIFY THESE TO CHANGE PAN POSITIONS
+  const panStart = { x: 500, y: 300 };
+  const panEnd = { x: 550, y: 280 };
+
+  const ease = p => p * p * (3 - 2 * p);
+
+  const update = () => {
+
+    const vh = slideElement.clientHeight;
+
+    const progress = Math.max(0, Math.min(
+      2,
+      slideElement.scrollTop / vh
+    ));
+
+    // PHASE 1: Zoom
+    const zoomProgress = Math.min(1, progress);
+
+    // PHASE 2: Pan
+    const panProgress = Math.max(
+      0,
+      Math.min(1, progress - 1)
+    );
+
+    const zoom = 1 + (MAX_ZOOM - 1) * ease(zoomProgress);
+
+    // Interpolate target position
+    const targetX = panStart.x +
+      (panEnd.x - panStart.x) * ease(panProgress);
+
+    const targetY = panStart.y +
+      (panEnd.y - panStart.y) * ease(panProgress);
+
+    // Keep target position at the centre of the SVG
+    const tx = svgWidth / 2 - targetX * zoom;
+    const ty = svgHeight / 2 - targetY * zoom;
+
+    world.setAttribute(
+      "transform",
+      `translate(${tx} ${ty}) scale(${zoom})`
+    );
+
+  };
+
+  slideElement.addEventListener("scroll", update, {
+    passive: true
+  });
+
+  update();
+}
 
 /* ==========================================
    INITIALIZE

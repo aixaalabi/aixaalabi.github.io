@@ -302,27 +302,136 @@ nav {
   isolation: isolate;
 }
 
-/* First divider */
-.scrolly-visual::before {
-  content: "";
+/*split scrolly*/
+
+.split-story {
+  position: relative;
+  height: 300vh;
+}
+
+.split-visual {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: #dcd2f0;
+}
+
+.split-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.split-line {
   position: absolute;
   left: 0;
-  top: var(--divider-1, 100%);
+  top: 0;
   width: 100%;
-  height: 3px;
-  background: white;
-  z-index: 10;
+  height: 2px;
+  background: #fff;
+  z-index: 5;
   pointer-events: none;
 }
 
-/* Second divider */
-.scrolly-divider {
-  position: absolute;
-  left: 0;
-  top: var(--divider-2, 100%);
-  width: 100%;
-  height: 3px;
-  background: white;
-  z-index: 10;
+.split-steps {
+  position: relative;
+  margin-top: -100vh;
+  z-index: 2;
   pointer-events: none;
+}
+
+.split-step {
+  height: 100vh;
+}
+
+/*circles moving*/
+
+.scrolly-slide {
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+
+.scrolly-slide::-webkit-scrollbar {
+  display: none;
+}
+
+.motion-story {
+  position: relative;
+  height: 200vh;
+}
+
+.motion-visual {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  background: #dcd2f0;
+}
+
+.motion-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.motion-circle {
+  transform-box: view-box;
+}
+
+.motion-steps {
+  position: relative;
+  margin-top: -100vh;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.motion-step {
+  height: 100vh;
+}
+
+/*zoom story*/
+
+.zoom-story {
+  position: relative;
+  height: 300vh;
+}
+
+.zoom-visual {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  background: #dcd2f0;
+}
+
+.zoom-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.split-story {
+  height: 300vh;
+}
+
+.motion-story {
+  height: 200vh;
+}
+
+.zoom-story {
+  height: 300vh;
 }
