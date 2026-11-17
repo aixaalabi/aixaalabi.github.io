@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hi, I'm Aixa</title>
+
+<link rel="icon" type="image/x-icon" href="./a.ico">
+<link rel="stylesheet" href="./src/style/main.css">
+</head>
+
+<body>
+
+<!-- NAVIGATION -->
+
+<nav id="navigation">
+  <div class="nav-item active" data-index="0">
+    <span class="dot"></span>About
+  </div>
+  <div class="nav-item" data-index="1">
+    <span class="dot"></span>Welcome
+  </div>
+  <div class="nav-item" data-index="2">
+    <span class="dot"></span>Project 1
+  </div>
+  <div class="nav-item" data-index="3">
+    <span class="dot"></span>Project 2
+  </div>
+  <div class="nav-item" data-index="4">
+    <span class="dot"></span>Project 3
+  </div>
+  <div class="last-nav nav-item" data-index="5">
+    <span class="dot"></span>Misc
+  </div>
+</nav>
+
+<!-- ARROWS -->
+
+<button class="arrow left" id="prev" aria-label="Previous slide">
+  <svg viewBox="0 0 20 30">
+    <path d="M17 2 L3 15 L17 28 Z" fill="currentColor"/>
+  </svg>
+</button>
+
+<button class="arrow right" id="next" aria-label="Next slide">
+  <svg viewBox="0 0 20 30">
+    <path d="M3 2 L17 15 L3 28 Z" fill="currentColor"/>
+  </svg>
+</button>
+
+<!-- CAROUSEL -->
+
+<main class="carousel">
+  <div class="track" id="track">
+
+    <section class="slide" id="leftSlide"></section>
+    <section class="slide" id="currentSlide"></section>
+    <section class="slide" id="rightSlide"></section>
+
+  </div>
+</main>
+
+<div id="slide-templates" hidden>
+
+  <template id="template-about">
+    <div class="slide-content">
+      <h1>About</h1>
+      <p>A little introduction about the work, the ideas and the person behind it.</p>
+      <div class="svg-placeholder">SVG / IMAGE</div>
+    </div>
+  </template>
+
+  <template id="template-welcome">
+    <div class="slide-content">
+      <h1>Welcome</h1>
+      <p>Welcome to this collection of selected work and explorations.</p>
+      <div class="svg-placeholder">SVG / IMAGE</div>
+    </div>
+  </template>
+
+  <template id="template-project-1">
+    <div class="scrolly-story">
+
+      <div class="scrolly-visual" data-state="0">
+
+        <div class="scrolly-background"></div>
+
+        <svg viewBox="0 0 600 400"
+             class="scrolly-svg"
+             xmlns="http://www.w3.org/2000/svg">
+
+          <circle class="story-circle circle-1"
+                  cx="300" cy="200" r="65"/>
+
+          <circle class="story-circle circle-2"
+                  cx="300" cy="200" r="65"/>
+
+          <circle class="story-circle circle-3"
+                  cx="300" cy="200" r="65"/>
+
+        </svg>
+
+        <h1 class="scrolly-title">Project 1</h1>
+
+        <div class="scrolly-divider"></div>
+
+      </div>
+
+      <div class="scrolly-steps">
+
+        <div class="scrolly-step" data-state="0">
+          <div class="step-content">
+            <h2>01 — Beginning</h2>
+            <p>The first stage of the project. An introduction to the visual concept.</p>
+          </div>
+        </div>
+
+        <div class="scrolly-step" data-state="1">
+          <div class="step-content">
+            <h2>02 — Transformation</h2>
+            <p>As we scroll, the visual language starts to change.</p>
+          </div>
+        </div>
+
+        <div class="scrolly-step" data-state="2">
+          <div class="step-content">
+            <h2>03 — Resolution</h2>
+            <p>The final stage reveals a new color and shape.</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </template>
+
+  <template id="template-project-2">
+    <div class="slide-content">
+      <h1>Project 2</h1>
+      <p>Project description goes here.</p>
+      <div class="svg-placeholder">SVG / IMAGE</div>
+    </div>
+  </template>
+
+  <template id="template-project-3">
+    <div class="slide-content">
+      <h1>Project 3</h1>
+      <p>Project description goes here.</p>
+      <div class="svg-placeholder">SVG / IMAGE</div>
+    </div>
+  </template>
+
+  <template id="template-misc">
+    <div class="slide-content">
+      <h1>Misc</h1>
+      <p>Other experiments, ideas and miscellaneous work.</p>
+      <div class="svg-placeholder">SVG / IMAGE</div>
+    </div>
+  </template>
+
+</div>
+
+<script type="module" src="./src/logic/main.js"></script>
+</body>
+</html>
