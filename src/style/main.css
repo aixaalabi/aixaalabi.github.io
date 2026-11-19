@@ -63,7 +63,7 @@ nav {
 }
 
 .nav-item.active .dot {
-  background: #1F1E3D;
+  background: #ed1a76;
   transform: scale(1.35);
 }
 
