@@ -649,7 +649,7 @@ async function initializeAixaBackground(clean = false) {
     width: '100%',
     height: '100%',
     zIndex: '0',
-    pointerEvents: 'none'
+    pointerEvents: 'auto'
   });
 
   const renderer = new THREE.WebGLRenderer({
@@ -908,6 +908,17 @@ async function initializeAixaBackground(clean = false) {
 
   portrait.addEventListener('pointermove', onPointerMove);
   portrait.addEventListener('pointerleave', onPointerLeave);
+  function preventTouchScroll(event) {
+    event.preventDefault();
+  }
+
+  canvas.addEventListener('touchstart', preventTouchScroll, {
+    passive: false
+  });
+
+  canvas.addEventListener('touchmove', preventTouchScroll, {
+    passive: false
+  });
 
   // -------------------------------
   // RESIZE
@@ -1018,9 +1029,8 @@ async function initializeAixaBackground(clean = false) {
 
 targetSlide = currentSlide;
 updateSlides();
-document.querySelectorAll('.aixa-slide .aixa-tool-name')
-  .forEach(name => {
-    name.addEventListener('click', () => {
-      name.closest('.aixa-tool').classList.toggle('open');
-    });
+document.querySelectorAll('.aixa-slide .aixa-tool-name').forEach(name => {
+  name.addEventListener('click', () => {
+    name.closest('.aixa-tool').classList.toggle('closed');
   });
+});
