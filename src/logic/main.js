@@ -88,11 +88,8 @@ function renderSlide(element, index) {
     slide.type === "scrolly"
   );
 
-  console.log(slide.title)
   switch (slide.title) {
-
     case "Welcome": 
-      console.log("indeed")
       initializeAixaBackground();
       break; 
 
@@ -622,7 +619,7 @@ function initializeZoomScrolly(slideElement) {
 let aixaActiveCleanup = null;
 let aixaInitId = 0;
 
-async function initializeAixaBackground() {
+async function initializeAixaBackground(clean = false) {
 
   // Clean up previous instance
   if (aixaActiveCleanup) {
@@ -808,7 +805,7 @@ async function initializeAixaBackground() {
       }
     `,
 
-    fragmentShader: `
+    fragmentShader: `            
       uniform sampler2D uVelocity;
       uniform float uTime;
 
@@ -816,53 +813,65 @@ async function initializeAixaBackground() {
 
       void main() {
 
-        vec2 velocity = texture2D(
-          uVelocity,
-          vUv
-        ).xy;
+          vec2 velocity = texture2D(uVelocity, vUv).xy;
 
-        // Make fluid displacement visible
-        vec2 uv = vUv - velocity * 1.5;
+          // Fluid displacement
+          vec2 uv = vUv - velocity * 1.5;
 
-        float t = uTime * 0.22;
+          float t = uTime * 0.22;
 
-        float wave1 = sin(
-          uv.x * 5.0 + uv.y * 3.0 + t
-        );
+          // Continuous diagonal movement
+          uv += vec2(t * 0.12, t * 0.12);
 
-        float wave2 = cos(
-          uv.y * 5.0 - uv.x * 3.0 - t
-        );
+          // Triangular grid
+          float scale = 7.0;
 
-        float wave3 = sin(
-          uv.x * 3.0 - uv.y * 4.0 + t
-        );
+          vec2 grid = uv * scale;
+          vec2 cell = fract(grid);
+          vec2 id = floor(grid);
 
-        vec3 lavender = vec3(0.72, 0.59, 0.87);
-        vec3 yellow = vec3(0.98, 0.86, 0.59);
-        vec3 blue = vec3(0.57, 0.77, 0.88);
-        vec3 pink = vec3(0.94, 0.65, 0.76);
+          // Triangle orientation
+          float triangle = step(cell.y, cell.x);
 
-        vec3 color = mix(
-          lavender,
-          yellow,
-          smoothstep(-0.3, 0.3, wave1)
-        );
+          // Animated color variation
+          float wave = sin(
+              id.x * 1.7 +
+              id.y * 2.3 +
+              t
+          );
 
-        color = mix(
-          color,
-          blue,
-          smoothstep(0.0, 0.8, wave2) * 0.85
-        );
+          float wave2 = cos(
+              id.x * 1.3 -
+              id.y * 1.8 -
+              t
+          );
 
-        color = mix(
-          color,
-          pink,
-          smoothstep(0.1, 0.8, wave3) * 0.85
-        );
+          vec3 lavender = vec3(0.72, 0.59, 0.87);
+          vec3 blue = vec3(0.57, 0.77, 0.88);
+          vec3 pink = vec3(0.94, 0.65, 0.76);
+          vec3 purple = vec3(0.55, 0.43, 0.72);
 
-        gl_FragColor = vec4(color, 1.0);
+          vec3 color = mix(
+              lavender,
+              blue,
+              smoothstep(-0.4, 0.5, wave)
+          );
+
+          color = mix(
+              color,
+              pink,
+              smoothstep(-0.2, 0.7, wave2) * 0.7
+          );
+
+          color = mix(
+              color,
+              purple,
+              triangle * 0.25
+          );
+
+          gl_FragColor = vec4(color, 1.0);
       }
+
     `
   });
 
