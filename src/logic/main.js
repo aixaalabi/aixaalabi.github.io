@@ -11,7 +11,7 @@ const slides = [
   },
   {
     title: "Welcome",
-    bg: "#d9e2dc",
+    bg: "#fefefe",
     template: "template-welcome",
     type: "standard"
   },
@@ -51,7 +51,7 @@ const rightSlide = document.getElementById("rightSlide");
 
 const navItems = document.querySelectorAll(".nav-item");
 
-let currentSlide = 0;
+let currentSlide = 1;
 let animationId = null;
 let animationTimeout = null;
 let isAnimating = false;
@@ -88,9 +88,13 @@ function renderSlide(element, index) {
     slide.type === "scrolly"
   );
 
-  if (slide.type === "scrolly") {
-
+  console.log(slide.title)
   switch (slide.title) {
+
+    case "Welcome": 
+      console.log("indeed")
+      initializeAixaBackground();
+      break; 
 
     case "Project 1":
       initializeScrolly(element);
@@ -107,17 +111,14 @@ function renderSlide(element, index) {
     case "Misc":
       initializeZoomScrolly(element);
       break;
-
   }
-}
 
-console.log(
-  slide.title,
-  "Scroll height:", element.scrollHeight,
-  "Client height:", element.clientHeight,
-  "Scrollable:", element.scrollHeight > element.clientHeight
-);
-
+// console.log(
+//   slide.title,
+//   "Scroll height:", element.scrollHeight,
+//   "Client height:", element.clientHeight,
+//   "Scrollable:", element.scrollHeight > element.clientHeight
+// );
   
 }
 
@@ -616,6 +617,390 @@ function initializeZoomScrolly(slideElement) {
   });
 
   update();
+}
+
+let aixaActiveCleanup = null;
+let aixaInitId = 0;
+
+async function initializeAixaBackground() {
+
+  // Clean up previous instance
+  if (aixaActiveCleanup) {
+    aixaActiveCleanup();
+    aixaActiveCleanup = null;
+  }
+
+  const initId = ++aixaInitId;
+
+  const slide = document.querySelector('.aixa-slide');
+  const portrait = slide?.querySelector('.aixa-portrait');
+
+  if (!portrait) return;
+
+  const THREE = await import(
+    'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js'
+  );
+
+  if (initId !== aixaInitId || !portrait.isConnected) return;
+
+  const canvas = document.createElement('canvas');
+  portrait.prepend(canvas);
+
+  Object.assign(canvas.style, {
+    position: 'absolute',
+    inset: '0',
+    width: '100%',
+    height: '100%',
+    zIndex: '0',
+    pointerEvents: 'none'
+  });
+
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: false,
+    alpha: false,
+    powerPreference: 'low-power'
+  });
+
+  renderer.setPixelRatio(1);
+
+  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+  const geometry = new THREE.PlaneGeometry(2, 2);
+
+  const simSize = 256;
+
+  const targetOptions = {
+    format: THREE.RGBAFormat,
+    type: THREE.HalfFloatType,
+    minFilter: THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
+    depthBuffer: false,
+    stencilBuffer: false
+  };
+
+  let read = new THREE.WebGLRenderTarget(
+    simSize, simSize, targetOptions
+  );
+
+  let write = new THREE.WebGLRenderTarget(
+    simSize, simSize, targetOptions
+  );
+
+  const clearTarget = (target) => {
+    renderer.setRenderTarget(target);
+    renderer.clear();
+  };
+
+  clearTarget(read);
+  clearTarget(write);
+  renderer.setRenderTarget(null);
+
+  // -------------------------------
+  // VELOCITY SIMULATION
+  // -------------------------------
+
+  const simUniforms = {
+    uVelocity: { value: read.texture },
+    uMouse: { value: new THREE.Vector2(-10, -10) },
+    uForce: { value: new THREE.Vector2(0, 0) },
+    uResolution: { value: new THREE.Vector2(simSize, simSize) },
+    uDelta: { value: 0.016 }
+  };
+
+  const simMaterial = new THREE.ShaderMaterial({
+    uniforms: simUniforms,
+
+    vertexShader: `
+      varying vec2 vUv;
+
+      void main() {
+        vUv = uv;
+        gl_Position = vec4(position, 1.0);
+      }
+    `,
+
+    fragmentShader: `
+      uniform sampler2D uVelocity;
+      uniform vec2 uMouse;
+      uniform vec2 uForce;
+      uniform vec2 uResolution;
+      uniform float uDelta;
+
+      varying vec2 vUv;
+
+      void main() {
+
+        vec2 uv = vUv;
+
+        // Read the previous velocity field
+        vec2 oldVelocity = texture2D(
+          uVelocity,
+          uv
+        ).xy;
+
+        // Advect velocity using the previous velocity
+        vec2 backtrace = uv - oldVelocity * uDelta * 0.8;
+
+        vec2 velocity = texture2D(
+          uVelocity,
+          clamp(backtrace, vec2(0.001), vec2(0.999))
+        ).xy;
+
+        // Dissipation
+        velocity *= 0.992;
+
+        // Aspect-correct mouse coordinates
+        vec2 aspect = vec2(
+          uResolution.x / uResolution.y,
+          1.0
+        );
+
+        vec2 pos = uv * aspect;
+        vec2 mouse = uMouse * aspect;
+
+        vec2 relative = pos - mouse;
+
+        float dist = length(relative);
+
+        // Localized cursor force
+        float influence = exp(-dist * dist * 180.0);
+
+        velocity += uForce * influence * 0.08;
+
+        // Vortex-like displacement around cursor
+        vec2 tangent = vec2(-relative.y, relative.x);
+
+        velocity += tangent *
+          influence *
+          length(uForce) *
+          0.018;
+
+        gl_FragColor = vec4(velocity, 0.0, 1.0);
+      }
+    `
+  });
+
+  const simScene = new THREE.Scene();
+
+  simScene.add(
+    new THREE.Mesh(geometry, simMaterial)
+  );
+
+  // -------------------------------
+  // COLOR DISPLAY
+  // -------------------------------
+
+  const displayUniforms = {
+    uVelocity: { value: read.texture },
+    uTime: { value: 0 }
+  };
+
+  const displayMaterial = new THREE.ShaderMaterial({
+    uniforms: displayUniforms,
+
+    vertexShader: `
+      varying vec2 vUv;
+
+      void main() {
+        vUv = uv;
+        gl_Position = vec4(position, 1.0);
+      }
+    `,
+
+    fragmentShader: `
+      uniform sampler2D uVelocity;
+      uniform float uTime;
+
+      varying vec2 vUv;
+
+      void main() {
+
+        vec2 velocity = texture2D(
+          uVelocity,
+          vUv
+        ).xy;
+
+        // Make fluid displacement visible
+        vec2 uv = vUv - velocity * 1.5;
+
+        float t = uTime * 0.22;
+
+        float wave1 = sin(
+          uv.x * 5.0 + uv.y * 3.0 + t
+        );
+
+        float wave2 = cos(
+          uv.y * 5.0 - uv.x * 3.0 - t
+        );
+
+        float wave3 = sin(
+          uv.x * 3.0 - uv.y * 4.0 + t
+        );
+
+        vec3 lavender = vec3(0.72, 0.59, 0.87);
+        vec3 yellow = vec3(0.98, 0.86, 0.59);
+        vec3 blue = vec3(0.57, 0.77, 0.88);
+        vec3 pink = vec3(0.94, 0.65, 0.76);
+
+        vec3 color = mix(
+          lavender,
+          yellow,
+          smoothstep(-0.3, 0.3, wave1)
+        );
+
+        color = mix(
+          color,
+          blue,
+          smoothstep(0.0, 0.8, wave2) * 0.85
+        );
+
+        color = mix(
+          color,
+          pink,
+          smoothstep(0.1, 0.8, wave3) * 0.85
+        );
+
+        gl_FragColor = vec4(color, 1.0);
+      }
+    `
+  });
+
+  const displayScene = new THREE.Scene();
+
+  displayScene.add(
+    new THREE.Mesh(geometry, displayMaterial)
+  );
+
+  // -------------------------------
+  // POINTER
+  // -------------------------------
+
+  const currentMouse = new THREE.Vector2(0.5, 0.5);
+  const targetMouse = new THREE.Vector2(0.5, 0.5);
+  const previousMouse = new THREE.Vector2(0.5, 0.5);
+
+  let pointerInside = false;
+
+  function onPointerMove(event) {
+    const rect = portrait.getBoundingClientRect();
+
+    targetMouse.set(
+      (event.clientX - rect.left) / rect.width,
+      1 - (event.clientY - rect.top) / rect.height
+    );
+
+    pointerInside = true;
+  }
+
+  function onPointerLeave() {
+    pointerInside = false;
+  }
+
+  portrait.addEventListener('pointermove', onPointerMove);
+  portrait.addEventListener('pointerleave', onPointerLeave);
+
+  // -------------------------------
+  // RESIZE
+  // -------------------------------
+
+  function resize() {
+    const width = portrait.clientWidth;
+    const height = portrait.clientHeight;
+
+    if (!width || !height) return;
+
+    renderer.setSize(width, height, false);
+  }
+
+  const resizeObserver = new ResizeObserver(resize);
+  resizeObserver.observe(portrait);
+
+  resize();
+
+  // -------------------------------
+  // ANIMATION
+  // -------------------------------
+
+  let animationFrame;
+  let lastTime = 0;
+  let running = true;
+
+  function animate(time) {
+
+    if (!running) return;
+
+    animationFrame = requestAnimationFrame(animate);
+
+    const dt = lastTime
+      ? Math.min((time - lastTime) / 1000, 0.033)
+      : 0.016;
+
+    lastTime = time;
+
+    currentMouse.lerp(targetMouse, 0.25);
+
+    const movement = new THREE.Vector2()
+      .subVectors(currentMouse, previousMouse);
+
+    previousMouse.copy(currentMouse);
+
+    simUniforms.uMouse.value.copy(currentMouse);
+
+    simUniforms.uForce.value.set(
+      pointerInside ? movement.x * 35 : 0,
+      pointerInside ? movement.y * 35 : 0
+    );
+
+    simUniforms.uDelta.value = dt;
+
+    // Simulation pass
+    simUniforms.uVelocity.value = read.texture;
+
+    renderer.setRenderTarget(write);
+    renderer.render(simScene, camera);
+
+    // Swap buffers
+    const temp = read;
+    read = write;
+    write = temp;
+
+    // Display pass
+    displayUniforms.uVelocity.value = read.texture;
+    displayUniforms.uTime.value = time * 0.001;
+
+    renderer.setRenderTarget(null);
+    renderer.render(displayScene, camera);
+  }
+
+  animate(0);
+
+  // -------------------------------
+  // CLEANUP
+  // -------------------------------
+
+  aixaActiveCleanup = () => {
+
+    running = false;
+
+    cancelAnimationFrame(animationFrame);
+
+    portrait.removeEventListener('pointermove', onPointerMove);
+    portrait.removeEventListener('pointerleave', onPointerLeave);
+
+    resizeObserver.disconnect();
+
+    read.dispose();
+    write.dispose();
+
+    geometry.dispose();
+    simMaterial.dispose();
+    displayMaterial.dispose();
+
+    renderer.dispose();
+
+    canvas.remove();
+  };
 }
 
 /* ==========================================

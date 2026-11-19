@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -434,4 +436,173 @@ nav {
 
 .zoom-story {
   height: 300vh;
+}
+
+
+/*welcome*/
+
+
+.aixa-slide {
+  position: relative;
+  isolation: isolate;
+  color: #302e35;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.aixa-slide .aixa-profile,
+.aixa-slide .aixa-bottom {
+  position: relative;
+  z-index: 1;
+}
+
+.aixa-slide .aixa-profile {
+  display: flex;
+  align-items: center;
+  gap: 3%;
+  margin-left: 6%;
+}
+
+.aixa-slide .aixa-portrait {
+  position: relative;
+  width: clamp(260px, 30vw, 420px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  isolation: isolate;
+}
+
+.aixa-slide .aixa-portrait img {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.aixa-slide .aixa-name {
+  position: relative;
+  font-size: clamp(45px, 6.5vw, 90px);
+  font-weight: 900;
+  letter-spacing: -4px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.aixa-slide .aixa-logo {
+  position: relative;
+}
+
+.aixa-slide .aixa-hi {
+  position: absolute;
+  z-index: 2;
+  top: -20px;
+  left: 0px;
+  font-size: 35px;
+  font-weight: 600;
+  letter-spacing: 0;
+  white-space: nowrap;
+  color: #1F1E3D;
+}
+
+.aixa-slide .aixa-subtitle {
+  max-width: 380px;
+  margin-top: -30px;
+  font-size: 18px;
+  line-height: 1.2;
+  color: #1F1E3D;
+}
+
+.aixa-slide .aixa-bottom {
+  margin: 7vh 8% 0 20%;
+}
+
+.aixa-slide .aixa-characteristics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+}
+
+.aixa-slide .aixa-number {
+  font-size: 11px;
+  color: #b69ab9;
+}
+
+.aixa-slide .aixa-heading {
+  margin: 12px 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.aixa-slide .aixa-description {
+  font-size: 11px;
+  line-height: 1.8;
+  color: #1F1E3D;
+}
+
+.aixa-slide .aixa-tools,
+.aixa-slide .aixa-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 30px;
+  font-size: 11px;
+}
+
+.aixa-slide .aixa-tools {
+  color: #1F1E3D;
+}
+
+.aixa-slide .aixa-tools span:first-child {
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #302e35;
+}
+
+.aixa-slide .aixa-links a {
+  color: #302e35;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.aixa-slide .aixa-links a:hover {
+  color: #b69ab9;
+}
+
+@media (max-width: 700px) {
+  .aixa-slide .aixa-profile {
+    margin-left: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 25px;
+  }
+
+  .aixa-slide .aixa-portrait {
+    width: 230px;
+  }
+
+  .aixa-slide .aixa-name {
+    font-size: 48px;
+    letter-spacing: -2px;
+  }
+
+  .aixa-slide .aixa-bottom {
+    margin: 45px 0 0;
+  }
+
+  .aixa-slide .aixa-characteristics {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+}
+
+.aixa-slide .aixa-portrait {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.aixa-slide .aixa-portrait img {
+  position: relative;
+  z-index: 1;
 }
