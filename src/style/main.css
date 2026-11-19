@@ -643,7 +643,6 @@ nav {
   .aixa-slide .aixa-tools,
   .aixa-slide .aixa-links {
     gap: 12px;
-    margin-top: 22px;
     font-size: 11px;
   }
 }
@@ -722,6 +721,7 @@ nav {
   display: flex;
   flex-direction: column;
   gap: 22px;
+  margin-right: 3px;
 }
 
 .aixa-slide .aixa-section-title {
@@ -737,7 +737,7 @@ nav {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 13px;
+  gap: 3px;
 }
 
 .aixa-slide .aixa-characteristics > div {
@@ -783,10 +783,104 @@ nav {
   transform: translate(0, 0);
 }
 
-@media (max-width: 700px) {
+@media (max-width: 800px) {
   .aixa-slide .aixa-bottom {
     grid-template-columns: 1fr;
     gap: 35px;
     margin: 45px 0 0;
+  }
+}
+
+.aixa-slide .aixa-column {
+  position: relative;
+}
+
+.aixa-slide .aixa-tools {
+  position: absolute;
+  top: 22px;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  z-index: 10;
+}
+
+.aixa-slide .aixa-tool {
+  position: relative;
+  background-color:  #fefefe;
+}
+
+.aixa-slide .aixa-tool-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #817b83;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.aixa-slide .aixa-tool:hover .aixa-tool-name,
+.aixa-slide .aixa-tool.open .aixa-tool-name {
+  color: #b69ab9;
+}
+
+.aixa-slide .aixa-tool-details {
+  display: none;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #817b83;
+  padding-top: 7px;
+}
+
+.aixa-slide .aixa-tool:hover .aixa-tool-details,
+.aixa-slide .aixa-tool.open .aixa-tool-details {
+  display: block;
+  width:300px;
+}
+
+/* Safari mobile SVG fix */
+.aixa-slide .aixa-portrait {
+  position: relative;
+  isolation: isolate;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+}
+
+.aixa-slide .aixa-portrait svg,
+.aixa-slide .aixa-portrait img {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+
+@media (max-width: 700px) {
+
+  .aixa-slide .aixa-intro {
+    transform: scale(0.65);
+  }
+
+  .aixa-slide .aixa-subtitle {
+    font-size: 21px;
+    line-height: 1.5;
+  }
+}
+
+@media (max-width: 800px) {
+
+
+  .aixa-slide .aixa-column {
+    min-width: 0;
+    align-items: center;
+  }
+
+  .aixa-slide .aixa-tools {
+    position: relative;
+    top: auto;
+    left: auto;
+    align-items: flex-start;
   }
 }

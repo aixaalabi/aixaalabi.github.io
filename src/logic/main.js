@@ -1018,3 +1018,9 @@ async function initializeAixaBackground(clean = false) {
 
 targetSlide = currentSlide;
 updateSlides();
+document.querySelectorAll('.aixa-slide .aixa-tool-name')
+  .forEach(name => {
+    name.addEventListener('click', () => {
+      name.closest('.aixa-tool').classList.toggle('open');
+    });
+  });
