@@ -340,13 +340,14 @@ let touchStartX = 0;
 let touchStartY = 0;
 
 track.addEventListener("touchstart", (e) => {
-
   touchStartX = e.changedTouches[0].screenX;
   touchStartY = e.changedTouches[0].screenY;
-
 }, { passive: true });
 
-track.addEventListener("touchend", (e) => {
+function trackTouchEnd(e) {
+  if (pointerInsideCanvas === true) {
+    return;
+  }
 
   const touchEndX = e.changedTouches[0].screenX;
   const touchEndY = e.changedTouches[0].screenY;
@@ -358,7 +359,9 @@ track.addEventListener("touchend", (e) => {
   if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
     goToSlide(dx > 0 ? 1 : -1);
   }
-}, { passive: true });
+}
+
+track.addEventListener("touchend", trackTouchEnd, { passive: true });
 
 
 /* ==========================================
@@ -618,6 +621,7 @@ function initializeZoomScrolly(slideElement) {
 
 let aixaActiveCleanup = null;
 let aixaInitId = 0;
+let pointerInsideCanvas = false;
 
 async function initializeAixaBackground(clean = false) {
 
@@ -892,6 +896,7 @@ async function initializeAixaBackground(clean = false) {
   let pointerInside = false;
 
   function onPointerMove(event) {
+    event.preventDefault();
     const rect = portrait.getBoundingClientRect();
 
     targetMouse.set(
@@ -900,25 +905,18 @@ async function initializeAixaBackground(clean = false) {
     );
 
     pointerInside = true;
+    pointerInsideCanvas = true;
   }
 
   function onPointerLeave() {
     pointerInside = false;
+     setTimeout(() => {
+      pointerInsideCanvas = false;
+    }, 100)
   }
 
   portrait.addEventListener('pointermove', onPointerMove);
   portrait.addEventListener('pointerleave', onPointerLeave);
-  function preventTouchScroll(event) {
-    event.preventDefault();
-  }
-
-  canvas.addEventListener('touchstart', preventTouchScroll, {
-    passive: false
-  });
-
-  canvas.addEventListener('touchmove', preventTouchScroll, {
-    passive: false
-  });
 
   // -------------------------------
   // RESIZE

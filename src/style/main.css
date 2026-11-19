@@ -740,15 +740,11 @@ nav {
   gap: 3px;
 }
 
-.aixa-slide .aixa-characteristics > div {
+.aixa-slide .aixa-characteristics > div,
+.aixa-slide .aixa-tools > div {
   font-size: 14px;
   font-weight: 600;
   color: #302e35;
-}
-
-.aixa-slide .aixa-tools > div {
-  font-size: 12px;
-  color: #817b83;
 }
 
 .aixa-slide .aixa-links a {
@@ -775,7 +771,7 @@ nav {
 }
 
 .aixa-slide .aixa-links a:hover {
-  color: #b69ab9;
+  color: #ed1a76;
 }
 
 .aixa-slide .aixa-links a:hover::after {
@@ -797,7 +793,7 @@ nav {
 
 .aixa-slide .aixa-tools {
   position: absolute;
-  top: 22px;
+  top: 33px;
   left: 0;
   display: flex;
   flex-direction: column;
@@ -810,34 +806,23 @@ nav {
   background-color:  #fefefe;
 }
 
-.aixa-slide .aixa-tool-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: #817b83;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.aixa-slide .aixa-tool:hover .aixa-tool-name,
-.aixa-slide .aixa-tool.open .aixa-tool-name {
-  color: #b69ab9;
-}
-
 .aixa-slide .aixa-tool-details {
   display: none;
+  width: 500px;
   font-size: 15px;
   line-height: 1.6;
   color: #817b83;
   padding-top: 7px;
 }
 
-.aixa-slide .aixa-tool.closed .aixa-tool-details {
-  display: none !important;
-}
+@media (hover: hover) {
+  .aixa-slide .aixa-tool:hover {
+    color: #ed1a76;
+  }
 
-.aixa-slide .aixa-tool:hover .aixa-tool-details {
-  display: block;
-  width: 150px;
+  .aixa-slide .aixa-tool:hover .aixa-tool-details {
+    display: block; 
+  }
 }
 
 /* Safari mobile SVG fix */
@@ -869,6 +854,23 @@ nav {
     font-size: 21px;
     line-height: 1.5;
   }
+
+  .aixa-slide .aixa-tool-details {
+    width: 200px;
+  }
+
+  .aixa-slide .aixa-tool .aixa-tool-details {
+    display: block;
+  }
+
+  .aixa-slide .aixa-tool.closed .aixa-tool-details {
+    display: none;
+  }
+
+  .aixa-slide .aixa-tool:not(.closed) {
+    color: #ed1a76;
+  }
+
 }
 
 @media (max-width: 800px) {
@@ -880,7 +882,7 @@ nav {
   .aixa-slide .aixa-tools {
     position: relative;
     top: auto;
-    left: auto;
+    left: -25px;
     align-items: flex-start;
   }
 }
