@@ -40,202 +40,284 @@ const slides = [
   }
 ];
 
+
 /* ==========================================
-   CAROUSEL SETUP
+   CAROUSEL SETUP — PERSISTENT SLIDES
 ========================================== */
 
 const track = document.getElementById("track");
-const leftSlide = document.getElementById("leftSlide");
-const currentSlideEl = document.getElementById("currentSlide");
-const rightSlide = document.getElementById("rightSlide");
-
 const navItems = document.querySelectorAll(".nav-item");
 
+const animationDuration = 800;
+
 let currentSlide = 1;
-let animationId = null;
+let targetSlide = 1;
 let animationTimeout = null;
 let isAnimating = false;
-let animationDuration = 800;
-let navigationQueue = [];
 
 const reducedMotion = window.matchMedia(
   "(prefers-reduced-motion: reduce)"
 ).matches;
 
+// Store all slide elements permanently.
+const slideElements = [];
 
 /* ==========================================
-   SLIDE RENDERING
+   CREATE ALL SLIDES ONCE
 ========================================== */
 
-function renderSlide(element, index) {
+function createSlides() {
 
-  const slide = slides[index];
+  track.replaceChildren();
 
-  const template = document.getElementById(
-    slide.template
-  );
+  slides.forEach((slide, index) => {
 
-  element.replaceChildren(
-    template.content.cloneNode(true)
-  );
+    const template = document.getElementById(
+      slide.template
+    );
 
-  element.dataset.index = index;
+    if (!template) {
+      throw new Error(
+        `Missing slide template: ${slide.template}`
+      );
+    }
 
-  element.style.background = slide.bg || "";
+    const element = document.createElement("section");
 
-  element.classList.toggle(
-    "scrolly-slide",
-    slide.type === "scrolly"
-  );
+    element.className = "slide";
+    element.dataset.index = index;
+    element.style.background = slide.bg || "";
 
-  switch (slide.title) {
-    case "Welcome": 
-      initializeAixaBackground();
-      break; 
+    if (slide.type === "scrolly") {
+      element.classList.add("scrolly-slide");
+    }
 
-    case "Project 1":
-      initializeScrolly(element);
-      break;
+    // Clone exactly once during initial setup.
+    element.appendChild(
+      template.content.cloneNode(true)
+    );
 
-    case "Project 2":
-      initializeSplitScrolly(element);
-      break;
+    track.appendChild(element);
 
-    case "Project 3":
-      initializeMotionScrolly(element);
-      break;
+    slideElements.push(element);
 
-    case "Misc":
-      initializeZoomScrolly(element);
-      break;
-  }
+  });
+
 }
+
+/* ==========================================
+   INITIALIZE EACH SLIDE EXACTLY ONCE
+========================================== */
+
+function initializeAllSlides() {
+
+  slideElements.forEach((element, index) => {
+
+    const slide = slides[index];
+
+    switch (slide.title) {
+
+      case "Welcome":
+        initializeAixaBackground();
+        break;
+
+      case "Project 1":
+        initializeScrolly(element);
+        break;
+
+      case "Project 2":
+        initializeSplitScrolly(element);
+        break;
+
+      case "Project 3":
+        initializeMotionScrolly(element);
+        break;
+
+      case "Misc":
+        initializeZoomScrolly(element);
+        break;
+
+    }
+
+  });
+
+}
+
+/* ==========================================
+   SLIDE POSITIONING
+========================================== */
+
+function getSlideTransform(index) {
+
+  return `translateX(-${index * (100 / slides.length)}%)`;
+
+}
+
+function updateActiveSlide() {
+
+  slideElements.forEach((element, index) => {
+
+    const active = index === currentSlide;
+
+    element.inert = !active;
+
+    element.setAttribute(
+      "aria-hidden",
+      String(!active)
+    );
+
+  });
+
+  navItems.forEach((item, index) => {
+
+    item.classList.toggle(
+      "active",
+      index === currentSlide
+    );
+
+  });
+
+}
+
+/* ==========================================
+   RESET SCROLL POSITIONS
+========================================== */
 
 function resetSlideScroll() {
 
-  [leftSlide, currentSlideEl, rightSlide].forEach(
-    (element) => {
+  slideElements.forEach(element => {
 
-      element.scrollTop = 0;
-      element.scrollLeft = 0;
+    element.scrollTop = 0;
+    element.scrollLeft = 0;
 
-    }
-  );
+  });
+
 }
 
 /* ==========================================
-   UPDATE THREE SLIDE POSITIONS
+   INITIAL POSITION
 ========================================== */
 
-function updateSlides() {
+function initializeCarousel() {
 
-  const total = slides.length;
+  createSlides();
 
-  // Hide the track while rebuilding and resetting
-  track.style.visibility = "hidden";
+  // Set the initial position without animation.
+  track.style.transition = "none";
+  track.style.transform = getSlideTransform(currentSlide);
 
-  renderSlide(
-    leftSlide,
-    (currentSlide - 1 + total) % total
-  );
+  updateActiveSlide();
 
-  renderSlide(
-    currentSlideEl,
-    currentSlide
-  );
+  // Initialize all slide functionality once.
+  initializeAllSlides();
 
-  renderSlide(
-    rightSlide,
-    (currentSlide + 1) % total
-  );
-
-  resetSlideScroll();
-
-  // Force layout before revealing the track
-  track.offsetHeight;
-
-  track.style.visibility = "visible";
 }
 
-let targetSlide = 0;
-let animationFrame = null;
+/* ==========================================
+   CANCEL ONGOING ANIMATION
+========================================== */
 
 function cancelAnimation() {
+
   if (!isAnimating) return;
 
   clearTimeout(animationTimeout);
 
-  // Immediately complete the current transition
   currentSlide = targetSlide;
 
   track.style.transition = "none";
-  track.style.transform = "translateX(-33.333333%)";
-
-  updateSlides();
+  track.style.transform = getSlideTransform(currentSlide);
 
   isAnimating = false;
   animationTimeout = null;
+
+  updateActiveSlide();
+
 }
 
-function goToSlide(direction) {
+/* ==========================================
+   NAVIGATION
+========================================== */
 
-  // Finish any ongoing transition instantly
+function navigateTo(index) {
+
   if (isAnimating) {
     cancelAnimation();
   }
 
-  // Calculate the new destination
-  targetSlide =
-    (currentSlide + direction + slides.length) % slides.length;
-    
-  navItems.forEach((item, i) => {
-    item.classList.toggle("active", i === targetSlide);
-  });
+  if (index === currentSlide) return;
+
+  targetSlide = index;
 
   isAnimating = true;
 
+  navItems.forEach((item, i) => {
+
+    item.classList.toggle(
+      "active",
+      i === targetSlide
+    );
+
+  });
+
+  // Establish the current position without animation.
   track.style.transition = "none";
-  track.style.transform = "translateX(-33.333333%)";
+  track.style.transform = getSlideTransform(currentSlide);
+
+  // Force layout.
   track.offsetHeight;
 
-  const distance =
-    (targetSlide - currentSlide + slides.length) % slides.length;
-
-  const animationDirection =
-    distance <= slides.length / 2 ? 1 : -1;
-
+  // Animate directly to the destination.
   track.style.transition = reducedMotion
     ? "none"
     : `transform ${animationDuration}ms cubic-bezier(.77, 0, .18, 1)`;
 
-  track.style.transform = animationDirection === 1
-    ? "translateX(-66.666667%)"
-    : "translateX(0%)";
+  track.style.transform = getSlideTransform(targetSlide);
 
   const finishAnimation = () => {
+
     currentSlide = targetSlide;
 
     track.style.transition = "none";
-    track.style.transform = "translateX(-33.333333%)";
+    track.style.transform = getSlideTransform(currentSlide);
 
-    updateSlides();
+    // Preserve the original behaviour of resetting scroll.
+    resetSlideScroll();
+
+    updateActiveSlide();
 
     isAnimating = false;
     animationTimeout = null;
+
   };
 
   if (reducedMotion) {
+
     finishAnimation();
+
   } else {
+
     animationTimeout = setTimeout(
       finishAnimation,
       animationDuration
     );
+
   }
+
+}
+
+function goToSlide(direction) {
+
+  const nextIndex =
+    (currentSlide + direction + slides.length) %
+    slides.length;
+
+  navigateTo(nextIndex);
+
 }
 
 /* ==========================================
-   BUTTONS AND NAVIGATION
+   BUTTONS
 ========================================== */
 
 document.getElementById("next").addEventListener(
@@ -248,77 +330,31 @@ document.getElementById("prev").addEventListener(
   () => goToSlide(-1)
 );
 
-/* NAVIGATION DOTS */
+/* ==========================================
+   NAVIGATION DOTS
+========================================== */
 
 navItems.forEach((item, index) => {
+
   item.addEventListener("click", () => {
 
-    if (isAnimating) cancelAnimation();
+    navigateTo(index);
 
-    if (index === currentSlide) return;
-
-    targetSlide = index;
-
-    // Update navigation immediately
-    navItems.forEach((dot, i) => {
-      dot.classList.toggle("active", i === index);
-    });
-
-    const forward =
-    (index - currentSlide + slides.length) % slides.length;
-
-    // Determine which side to use
-    const direction = forward <= slides.length / 2 ? 1 : -1;
-
-    // Replace the appropriate neighboring slide
-    if (direction === 1) {
-        renderSlide(rightSlide, index);
-    } else {
-        renderSlide(leftSlide, index);
-    }
-    // Start animation
-    isAnimating = true;
-
-    track.style.transition = "none";
-    track.style.transform = "translateX(-33.333333%)";
-    track.offsetHeight;
-
-    track.style.transition =
-      `transform ${animationDuration}ms cubic-bezier(.77, 0, .18, 1)`;
-
-    track.style.transform = direction === 1
-      ? "translateX(-66.666667%)"
-      : "translateX(0%)";
-
-    animationTimeout = setTimeout(() => {
-
-      // Commit destination
-      currentSlide = index;
-
-      // Silently rebuild all three positions
-      track.style.transition = "none";
-      track.style.transform = "translateX(-33.333333%)";
-
-      updateSlides();
-
-      isAnimating = false;
-      animationTimeout = null;
-
-    }, animationDuration);
   });
+
 });
 
 /* ==========================================
    KEYBOARD NAVIGATION
 ========================================== */
 
-document.addEventListener("keydown", (e) => {
+document.addEventListener("keydown", event => {
 
-  if (e.key === "ArrowRight") {
+  if (event.key === "ArrowRight") {
     goToSlide(1);
   }
 
-  if (e.key === "ArrowLeft") {
+  if (event.key === "ArrowLeft") {
     goToSlide(-1);
   }
 
@@ -331,29 +367,41 @@ document.addEventListener("keydown", (e) => {
 let touchStartX = 0;
 let touchStartY = 0;
 
-track.addEventListener("touchstart", (e) => {
-  touchStartX = e.changedTouches[0].screenX;
-  touchStartY = e.changedTouches[0].screenY;
+track.addEventListener("touchstart", event => {
+
+  touchStartX = event.changedTouches[0].screenX;
+  touchStartY = event.changedTouches[0].screenY;
+
 }, { passive: true });
 
-function trackTouchEnd(e) {
+track.addEventListener("touchend", event => {
+
   if (pointerInsideCanvas === true) {
     return;
   }
 
-  const touchEndX = e.changedTouches[0].screenX;
-  const touchEndY = e.changedTouches[0].screenY;
+  const touchEndX = event.changedTouches[0].screenX;
+  const touchEndY = event.changedTouches[0].screenY;
 
   const dx = touchStartX - touchEndX;
   const dy = touchStartY - touchEndY;
 
-  // Horizontal swipes only
-  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
-    goToSlide(dx > 0 ? 1 : -1);
-  }
-}
+  if (
+    Math.abs(dx) > 50 &&
+    Math.abs(dx) > Math.abs(dy)
+  ) {
 
-track.addEventListener("touchend", trackTouchEnd, { passive: true });
+    goToSlide(dx > 0 ? 1 : -1);
+
+  }
+
+}, { passive: true });
+
+/* ==========================================
+   START
+========================================== */
+
+initializeCarousel();
 
 
 /* ==========================================
