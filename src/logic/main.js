@@ -446,6 +446,9 @@ async function initializeScrolly(slideElement) {
   // LOADING STATE
   // ==========================================
 
+  slideElement.scrollTop = 0;
+  slideElement.classList.add("is-loading");
+
   if (loader) {
     loader.classList.remove("hidden");
   }
@@ -649,9 +652,7 @@ async function initializeScrolly(slideElement) {
 
       // Explicitly override the animation timing.
       animation.effect.updateTiming({
-        iterations: 1,
-        fill: "both",
-        direction: "normal"
+        fill: "both"
       });
 
       // Pause before setting the initial position.
@@ -773,78 +774,79 @@ async function initializeScrolly(slideElement) {
   }
 
   // ==========================================
-  // CONFIGURE SCROLL INTERVALS
+  // CONFIGURE SCROLL TIMELINE FROM SVG DURATION
   // ==========================================
 
-  // SVG 1: static, half a viewport.
-  // SVG 2 onwards: one viewport per SVG.
+  // All animation durations are in milliseconds.
+  // 1000ms of animation = 1 viewport of scrolling.
 
-  const intervals = sequences.map((sequence, index) => {
+  const svgTimelineDuration = Math.max(
+    0,
+    ...animationGroups.flatMap(group =>
+      group.animations.map(animation =>
+        animation.effect.getComputedTiming().endTime
+      )
+    ),
+    ...animationGroups.map(group =>
+      group.smilDuration * 1000
+    )
+  ) / 1000;
 
-    const duration = index === 0
-      ? STATIC_SCROLL
-      : ANIMATED_SCROLL;
+  // The single SVG occupies the entire timeline.
+  const intervals = sequences.map(() => ({
+    start: 0,
+    duration: svgTimelineDuration
+  }));
 
-    return {
-      start: index === 0
-        ? 0
-        : STATIC_SCROLL + (index - 1) * ANIMATED_SCROLL,
-
-      duration
-    };
-
-  });
-
-  const totalScrollUnits =
-    intervals.reduce((total, interval) => {
-      return Math.max(
-        total,
-        interval.start + interval.duration
-      );
-    }, 0);
+  const totalScrollUnits = svgTimelineDuration;
 
   // ==========================================
-  // CACHE ANIMATION TIMINGS
+  // STORY HEIGHT + NARRATIVE TIMING
   // ==========================================
 
-  const timingGroups = animationGroups.map(group => {
+  const stepStarts = steps.map(step =>
+    Number(step.dataset.start)
+  );
 
-    return group.animations.map(animation => {
-
-      const timing = animation.effect.getTiming();
-      const computed = animation.effect.getComputedTiming();
-
-      return {
-        duration: typeof timing.duration === "number"
-          ? timing.duration
-          : computed.duration,
-
-        delay: timing.delay || 0
-      };
-
-    });
-  });
-
-  // ==========================================
-  // STORY HEIGHT
-  // ==========================================
+  // Make sure the HTML timings are valid.
+  if (
+    stepStarts.some((value, index) =>
+      !Number.isFinite(value) ||
+      value < 0 ||
+      (index > 0 && value <= stepStarts[index - 1])
+    )
+  ) {
+    throw new Error(
+      "Narrative data-start values must be increasing numbers."
+    );
+  }
 
   function setStoryHeight() {
 
     const vh = slideElement.clientHeight;
 
-    story.style.height =
-      `${(totalScrollUnits + 1) * vh}px`;
+    const lastStepStart = stepStarts.at(-1) || 0;
 
-    // Narrative step heights follow the same timing.
+    // Allow at least one viewport of reading time
+    // after the final text block appears.
+    const narrativeEnd = lastStepStart + 1;
+
+    // The longer timeline determines the story height.
+    const storyEnd = Math.max(
+      totalScrollUnits,
+      narrativeEnd
+    );
+
+    story.style.height = `${(storyEnd + 1) * vh}px`;
+
+    // Each narrative block occupies the time
+    // between its own start and the next block.
     steps.forEach((step, index) => {
 
-      const interval = intervals[index];
+      const nextStart = stepStarts[index + 1] ?? storyEnd;
 
-      if (interval) {
-        step.style.height =
-          `${interval.duration * vh}px`;
-      }
+      step.style.height =
+        `${(nextStart - stepStarts[index]) * vh}px`;
 
     });
 
@@ -870,8 +872,10 @@ async function initializeScrolly(slideElement) {
       return;
     }
 
+    const scrollProgress = slideElement.scrollTop / vh;
+
     const globalProgress = clamp(
-      slideElement.scrollTop / vh,
+      scrollProgress,
       0,
       totalScrollUnits
     );
@@ -903,19 +907,10 @@ async function initializeScrolly(slideElement) {
       sequence.style.visibility =
         isVisible ? "visible" : "hidden";
 
-      // Seek all animations inside this SVG.
-      animationGroups[index].animations.forEach((animation, i) => {
+      // Seek animations using absolute timeline time.
+      animationGroups[index].animations.forEach(animation => {
 
-        const { duration, delay } =
-          timingGroups[index][i];
-
-        if (!Number.isFinite(duration)) return;
-
-        const targetTime = clamp(
-          localProgress
-        ) * duration;
-
-        animation.currentTime = delay + targetTime;
+        animation.currentTime = globalProgress * 1000;
 
       });
 
@@ -926,7 +921,7 @@ async function initializeScrolly(slideElement) {
       if (group.smilAnimations.length) {
 
         group.doc.documentElement.setCurrentTime(
-          group.smilDuration * localProgress
+          globalProgress
         );
 
       }
@@ -943,24 +938,46 @@ async function initializeScrolly(slideElement) {
     // UPDATE NARRATIVE STEPS
     // ------------------------------------------
 
-    const activeStep = intervals.findIndex(interval => {
-
-      return (
-        globalProgress >= interval.start &&
-        globalProgress < interval.start + interval.duration
-      );
-
-    });
+    // ------------------------------------------
+    // SCROLL-DRIVEN NARRATIVE OPACITY
+    // ------------------------------------------
 
     steps.forEach((step, index) => {
 
-      step.classList.toggle(
-        "active",
-        index === activeStep
+      const start = stepStarts[index];
+      const nextStart = stepStarts[index + 1];
+
+      const fadeInDuration =
+        Number(step.dataset.fadeIn ?? 0.2);
+
+      const fadeOutDuration =
+        Number(step.dataset.fadeOut ?? 0.2);
+
+      const fadeIn = clamp(
+        (scrollProgress - start) / fadeInDuration,
+        0,
+        1
       );
 
-    });
+      const fadeOut = nextStart === undefined
+        ? 1
+        : clamp(
+            (nextStart - scrollProgress) / fadeOutDuration,
+            0,
+            1
+          );
 
+      const opacity = Math.min(fadeIn, fadeOut);
+
+      const content = step.querySelector(".step-content");
+
+      if (content) {
+        content.style.opacity = opacity;
+        content.style.visibility =
+          opacity > 0 ? "visible" : "hidden";
+      }
+
+    });
     ticking = false;
 
   };
@@ -1035,6 +1052,8 @@ async function initializeScrolly(slideElement) {
   if (loader) {
     loader.classList.add("hidden");
   }
+
+  slideElement.classList.remove("is-loading");
 
   // Establish initial animation positions.
   updateScrolly();

@@ -36,6 +36,24 @@ nav {
   font-size: 12px;
 }
 
+.nav-label {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.25s ease,
+    visibility 0s linear 0.25s;
+}
+
+.nav-item.active .nav-label,
+.nav-item:hover .nav-label,
+.nav-item:focus-visible .nav-label {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 0.25s ease,
+    visibility 0s;
+}
+
 .nav-item:not(.last-nav)::before {
   content: "";
   display: block;
@@ -192,6 +210,9 @@ nav {
   left: 10%;
   font-size: clamp(40px, 7vw, 90px);
   font-weight: 400;
+  background: #dcd2f0;
+  padding: 5px 18px;
+  z-index: 10;
 }
 
 /* SCROLL STEPS */
@@ -208,25 +229,6 @@ nav {
   display: flex;
   align-items: flex-end;
   padding: 0 10% 12vh;
-}
-
-.step-content {
-  max-width: 380px;
-  background: rgba(255,255,255,0.85);
-  padding: 25px;
-  backdrop-filter: blur(10px);
-}
-
-.step-content h2 {
-  font-size: 22px;
-  font-weight: 400;
-  margin-bottom: 12px;
-}
-
-.step-content p {
-  font-size: 14px;
-  line-height: 1.6;
-  color: #555;
 }
 
 /* RESPONSIVE */
@@ -341,6 +343,11 @@ nav {
 
 .scrolly-slide::-webkit-scrollbar {
   display: none;
+}
+
+.scrolly-slide.is-loading {
+  overflow-y: hidden !important;
+  overscroll-behavior: none;
 }
 
 .motion-story {
@@ -1022,12 +1029,23 @@ nav {
   background: rgba(255,255,255,0.85);
   backdrop-filter: blur(10px);
 
-  opacity: 0.45;
-  transition: opacity 0.3s ease;
+  opacity: 0;
+  visibility: hidden;
+
+  /* Important: opacity is controlled exclusively by JS */
+  transition: none !important;
 }
 
-.scrolly-step.active .step-content {
-  opacity: 1;
+.step-content h2 {
+  font-size: 22px;
+  font-weight: 400;
+  margin-bottom: 12px;
+}
+
+.step-content p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #555;
 }
 
 /* ==========================================
