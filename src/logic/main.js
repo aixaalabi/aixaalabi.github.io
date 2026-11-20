@@ -625,6 +625,12 @@ let pointerInsideCanvas = false;
 
 async function initializeAixaBackground(clean = false) {
 
+  document.querySelectorAll('.aixa-slide .aixa-tool-name').forEach(name => {
+    name.addEventListener('touchstart', () => {
+      name.closest('.aixa-tool').classList.toggle('closed');
+    });
+  });
+
   // Clean up previous instance
   if (aixaActiveCleanup) {
     aixaActiveCleanup();
@@ -1027,8 +1033,3 @@ async function initializeAixaBackground(clean = false) {
 
 targetSlide = currentSlide;
 updateSlides();
-document.querySelectorAll('.aixa-slide .aixa-tool-name').forEach(name => {
-  name.addEventListener('click', () => {
-    name.closest('.aixa-tool').classList.toggle('closed');
-  });
-});
