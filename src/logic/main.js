@@ -774,31 +774,60 @@ async function initializeScrolly(slideElement) {
   }
 
   // ==========================================
-  // CONFIGURE SCROLL TIMELINE FROM SVG DURATION
+  // CONFIGURE SEQUENTIAL SVG TIMELINE
   // ==========================================
 
-  // All animation durations are in milliseconds.
-  // 1000ms of animation = 1 viewport of scrolling.
+  // Cache finite animation timings for each SVG.
+  const timingGroups = animationGroups.map(group =>
+    group.animations.map(animation => {
+      const timing = animation.effect.getTiming();
+      const computed = animation.effect.getComputedTiming();
 
-  const svgTimelineDuration = Math.max(
-    0,
-    ...animationGroups.flatMap(group =>
-      group.animations.map(animation =>
-        animation.effect.getComputedTiming().endTime
-      )
-    ),
-    ...animationGroups.map(group =>
+      const duration = Number.isFinite(computed.duration)
+        ? computed.duration
+        : 0;
+
+      const iterations = Number.isFinite(timing.iterations)
+        ? timing.iterations
+        : 1;
+
+      const delay = Number.isFinite(timing.delay)
+        ? timing.delay
+        : 0;
+
+      return {
+        duration,
+        iterations,
+        delay,
+        endTime: Math.max(0, delay + duration * iterations)
+      };
+    })
+  );
+
+  // Calculate each SVG's duration independently.
+  const svgDurations = animationGroups.map((group, index) =>
+    Math.max(
+      0.001,
+      ...timingGroups[index].map(timing => timing.endTime),
       group.smilDuration * 1000
-    )
-  ) / 1000;
+    ) / 1000
+  );
 
-  // The single SVG occupies the entire timeline.
-  const intervals = sequences.map(() => ({
-    start: 0,
-    duration: svgTimelineDuration
-  }));
+  // Build sequential intervals.
+  let timelineStart = 0;
 
-  const totalScrollUnits = svgTimelineDuration;
+  const intervals = svgDurations.map(duration => {
+    const interval = {
+      start: timelineStart,
+      duration
+    };
+
+    timelineStart += duration;
+
+    return interval;
+  });
+
+  const totalScrollUnits = timelineStart;
 
   // ==========================================
   // STORY HEIGHT + NARRATIVE TIMING
@@ -907,21 +936,31 @@ async function initializeScrolly(slideElement) {
       sequence.style.visibility =
         isVisible ? "visible" : "hidden";
 
-      // Seek animations using absolute timeline time.
-      animationGroups[index].animations.forEach(animation => {
+      // Seek animations using SVG-local progress.
+      animationGroups[index].animations.forEach((animation, i) => {
 
-        animation.currentTime = globalProgress * 1000;
+        const timing = timingGroups[index][i];
+
+        if (!Number.isFinite(timing.duration)) return;
+
+        const targetTime =
+          timing.delay +
+          localProgress * timing.duration * timing.iterations;
+
+        if (Number.isFinite(targetTime)) {
+          animation.currentTime = targetTime;
+        }
 
       });
 
       // sync SMIL animations
 
       const group = animationGroups[index];
-
+      const localTime = localProgress * interval.duration;
       if (group.smilAnimations.length) {
 
         group.doc.documentElement.setCurrentTime(
-          globalProgress
+          localTime
         );
 
       }
