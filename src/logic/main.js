@@ -54,6 +54,9 @@ let currentSlide = 1;
 let targetSlide = 1;
 let animationTimeout = null;
 let isAnimating = false;
+let aixaActiveCleanup = null;
+let aixaInitId = 0;
+let pointerInsideCanvas = false;
 
 const reducedMotion = window.matchMedia(
   "(prefers-reduced-motion: reduce)"
@@ -1202,10 +1205,6 @@ function initializeZoomScrolly(slideElement) {
   update();
 }
 
-let aixaActiveCleanup = null;
-let aixaInitId = 0;
-let pointerInsideCanvas = false;
-
 async function initializeAixaBackground(clean = false) {
 
   document.querySelectorAll('.aixa-slide .aixa-tool-name').forEach(name => {
@@ -1215,7 +1214,7 @@ async function initializeAixaBackground(clean = false) {
   });
 
   // Clean up previous instance
-  if (aixaActiveCleanup) {
+  if (aixaActiveCleanup !== null) {
     aixaActiveCleanup();
     aixaActiveCleanup = null;
   }
@@ -1811,5 +1810,4 @@ function initializeSVGMagnifier() {
 ========================================== */
 
 targetSlide = currentSlide;
-updateSlides();
 const cleanupMagnifier = initializeSVGMagnifier();
