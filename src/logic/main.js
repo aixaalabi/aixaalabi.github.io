@@ -708,7 +708,7 @@ async function initializeScrolly(slideElement) {
     );
 
     if (destroyed || !slideElement.isConnected) return;
-
+    
   } catch (error) {
 
     console.error("Scrolly initialization failed:", error);
@@ -868,9 +868,7 @@ async function initializeScrolly(slideElement) {
 
       });
 
-      // ==========================================
-      // SYNCHRONIZE SMIL ANIMATIONS
-      // ==========================================
+      // sync SMIL animations
 
       const group = animationGroups[index];
 
@@ -989,7 +987,6 @@ async function initializeScrolly(slideElement) {
 
   // Establish initial animation positions.
   updateScrolly();
-
 }
 
 
@@ -1565,9 +1562,206 @@ async function initializeAixaBackground(clean = false) {
   };
 }
 
+function initializeSVGMagnifier() {
+
+  const lens = document.createElement("div");
+  lens.id = "svg-magnifier";
+
+  const content = document.createElement("div");
+  content.id = "svg-magnifier-content";
+
+  lens.appendChild(content);
+  document.body.appendChild(lens);
+
+  let activeObject = null;
+  let activeSVG = null;
+
+  const modifierPressed = event =>
+    event.ctrlKey || event.metaKey;
+
+  function hideLens() {
+    lens.style.display = "none";
+    activeObject = null;
+    activeSVG = null;
+  }
+
+  function findObject(x, y) {
+
+    const objects = document.querySelectorAll(
+      'object[type="image/svg+xml"], object'
+    );
+
+    return [...objects].find(object => {
+
+      const rect = object.getBoundingClientRect();
+
+      const inside =
+        x >= rect.left &&
+        x <= rect.right &&
+        y >= rect.top &&
+        y <= rect.bottom;
+
+      const isSVG =
+        object.contentDocument?.documentElement?.localName === "svg";
+
+      return inside && isSVG;
+
+    }) || null;
+  }
+
+  function activate(object) {
+
+    const doc = object.contentDocument;
+    const svg = doc?.documentElement;
+
+    if (!svg) return false;
+
+    const viewBox = svg.viewBox.baseVal;
+
+    const nativeWidth =
+      svg.width.baseVal.value || viewBox.width;
+
+    const nativeHeight =
+      svg.height.baseVal.value || viewBox.height;
+
+    if (!nativeWidth || !nativeHeight) return false;
+
+    const rect = object.getBoundingClientRect();
+
+    if (
+      rect.width >= nativeWidth &&
+      rect.height >= nativeHeight
+    ) {
+      hideLens();
+      return false;
+    }
+
+    activeObject = object;
+    activeSVG = svg;
+
+    content.innerHTML = "";
+
+    const clone = svg.cloneNode(true);
+
+    clone.setAttribute("width", nativeWidth);
+    clone.setAttribute("height", nativeHeight);
+
+    clone.querySelectorAll(
+      "animate, animateTransform, animateMotion, set"
+    ).forEach(element => element.remove());
+
+    clone.querySelectorAll("*").forEach(element => {
+      element.style.animation = "none";
+    });
+
+    content.appendChild(clone);
+    const zoom = 2;
+
+    content.style.width = `${nativeWidth * zoom}px`;
+    content.style.height = `${nativeHeight * zoom}px`;
+
+    clone.setAttribute("width", nativeWidth * zoom);
+    clone.setAttribute("height", nativeHeight * zoom);
+
+    lens.dataset.nativeWidth = nativeWidth;
+    lens.dataset.nativeHeight = nativeHeight;
+
+    return true;
+  }
+
+  function update(event) {
+
+    if (!modifierPressed(event)) {
+      hideLens();
+      return;
+    }
+
+    
+
+    // Keyboard events don't reliably contain pointer coordinates.
+    if (
+      !Number.isFinite(event.clientX) ||
+      !Number.isFinite(event.clientY)
+    ) {
+      return;
+    }
+    
+    const object = findObject(
+      event.clientX,
+      event.clientY
+    );
+    
+    if (!object) {
+      hideLens();
+      return;
+    }
+
+    console.log("should work")
+
+    if (activeObject !== object) {
+      if (!activate(object)) return;
+    }
+
+    
+
+    const rect = object.getBoundingClientRect();
+
+    const nativeWidth = Number(lens.dataset.nativeWidth);
+    const nativeHeight = Number(lens.dataset.nativeHeight);
+
+    const diameter = Math.min(
+      window.innerWidth,
+      window.innerHeight
+    ) * 0.5;
+
+    // Map pointer position into native SVG coordinates.
+    const x = (event.clientX - rect.left) *
+      nativeWidth / rect.width;
+
+    const y = (event.clientY - rect.top) *
+      nativeHeight / rect.height;
+
+    lens.style.width = `${diameter}px`;
+    lens.style.height = `${diameter}px`;
+
+    lens.style.left =
+      `${event.clientX - diameter / 2}px`;
+
+    lens.style.top =
+      `${event.clientY - diameter / 2}px`;
+
+    const zoom = 2;
+
+    content.style.left = `${diameter / 2 - x * zoom}px`;
+    content.style.top = `${diameter / 2 - y * zoom}px`;
+
+    lens.style.display = "block";
+  }
+
+  // Global mouse tracking.
+  document.addEventListener("pointermove", update);
+
+  document.addEventListener("keyup", event => {
+    if (!event.ctrlKey && !event.metaKey) {
+      hideLens();
+    }
+  });
+
+  window.addEventListener("blur", hideLens);
+  window.addEventListener("resize", hideLens);
+
+  return () => {
+    hideLens();
+    document.removeEventListener("pointermove", update);
+    lens.remove();
+  };
+}
+
+
 /* ==========================================
    INITIALIZE
 ========================================== */
 
 targetSlide = currentSlide;
 updateSlides();
+const cleanupMagnifier = initializeSVGMagnifier();

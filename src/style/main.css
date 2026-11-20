@@ -888,21 +888,13 @@ nav {
   overflow-y: auto;
   overflow-x: hidden;
   height: 100vh;
-  scroll-behavior: auto;
   scrollbar-width: none;
+  overscroll-behavior: auto;
 }
 
 .scrolly-slide::-webkit-scrollbar {
   display: none;
 }
-
-/* .scrolly-story {
-  position: relative;
-  width: 100%;
-  min-height: 300vh;
-} */
-
-
 
 /* ==========================================
    STORY CONTAINER
@@ -1062,4 +1054,22 @@ nav {
     left: 6%;
   }
 
+}
+
+#svg-magnifier {
+  position: fixed;
+  z-index: 999999;
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+  display: none;
+  border: 2px solid white;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
+  background: white;
+}
+
+#svg-magnifier-content {
+  position: absolute;
+  transform-origin: top left;
+  pointer-events: none;
 }
