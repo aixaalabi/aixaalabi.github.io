@@ -152,28 +152,6 @@ nav {
 }
 
 
-/* SCROLLYTELLING */
-
-.scrolly-slide {
-  display: block;
-  overflow-y: auto;
-  overflow-x: hidden;
-  height: 100vh;
-  scroll-behavior: auto;
-  scrollbar-width: none;
-  overscroll-behavior: contain;
-}
-
-.scrolly-slide::-webkit-scrollbar {
-  display: none;
-}
-
-.scrolly-story {
-  position: relative;
-  width: 100%;
-  min-height: 300vh;
-}
-
 /* STICKY VISUAL */
 
 .scrolly-visual {
@@ -357,7 +335,6 @@ nav {
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none;
-  overscroll-behavior: contain;
 }
 
 .scrolly-slide::-webkit-scrollbar {
@@ -448,7 +425,7 @@ nav {
   width: 100%;
   height: 100%;
   min-height: 100vh;
-  padding: 105px 5% 35px;
+  padding: 250px 5% 35px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -858,7 +835,9 @@ nav {
   .aixa-slide .aixa-tool-details {
     width: 200px;
   }
+}
 
+@media(hover: none) {
   .aixa-slide .aixa-tool .aixa-tool-details {
     display: block;
   }
@@ -870,7 +849,6 @@ nav {
   .aixa-slide .aixa-tool:not(.closed) {
     color: #ed1a76;
   }
-
 }
 
 @media (max-width: 800px) {
@@ -888,7 +866,7 @@ nav {
 }
 
 .aixa-links { 
-  margin-bottom:200px
+  margin-bottom:100px
 }
 
 .aixa-slide .aixa-portrait canvas {
@@ -901,4 +879,187 @@ nav {
 .aixa-slide .aixa-portrait {
   touch-action: none;
   overscroll-behavior: contain;
+}
+
+/* SCROLLYTELLING */
+
+.scrolly-slide {
+  display: block;
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100vh;
+  scroll-behavior: auto;
+  scrollbar-width: none;
+}
+
+.scrolly-slide::-webkit-scrollbar {
+  display: none;
+}
+
+/* .scrolly-story {
+  position: relative;
+  width: 100%;
+  min-height: 300vh;
+} */
+
+
+
+/* ==========================================
+   STORY CONTAINER
+========================================== */
+
+.scrolly-story {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+}
+
+/* ==========================================
+   STICKY VISUAL
+========================================== */
+
+.scrolly-visual {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* ==========================================
+   SVG STACK
+========================================== */
+
+.scrolly-sequences {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.scrolly-sequence {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: none;
+  background: transparent;
+  pointer-events: none;
+}
+
+/* ==========================================
+   LOADER
+========================================== */
+
+.scrolly-loader {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+
+  background: #fff;
+  color: #333;
+
+  transition: opacity 0.4s ease,
+              visibility 0.4s ease;
+}
+
+.scrolly-loader.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.scrolly-spinner {
+  position:absolute;
+  padding-top:10px;
+  width: 36px;
+  height: 36px;
+
+  border: 3px solid #ddd;
+  border-top-color: #333;
+  border-radius: 50%;
+
+  animation: scrolly-spin 0.8s linear infinite;
+}
+
+@keyframes scrolly-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.scrolly-loader p {
+  font-size: 14px;
+  opacity: 0.65;
+  margin-top: 55%;
+}
+
+/* ==========================================
+   NARRATIVE STEPS
+========================================== */
+
+.scrolly-steps {
+  position: relative;
+  z-index: 2;
+  margin-top: -100vh;
+  pointer-events: none;
+}
+
+.scrolly-step {
+  height: 100vh;
+
+  display: flex;
+  align-items: flex-end;
+
+  padding: 0 10% 12vh;
+}
+
+.step-content {
+  max-width: 380px;
+  padding: 25px;
+
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(10px);
+
+  opacity: 0.45;
+  transition: opacity 0.3s ease;
+}
+
+.scrolly-step.active .step-content {
+  opacity: 1;
+}
+
+/* ==========================================
+   TITLE
+========================================== */
+
+.scrolly-title {
+  position: absolute;
+  z-index: 10;
+  top: 120px;
+  left: 10%;
+}
+
+/* ==========================================
+   MOBILE
+========================================== */
+
+@media (max-width: 600px) {
+
+  .scrolly-step {
+    padding: 0 6% 12vh;
+  }
+
+  .scrolly-title {
+    top: 100px;
+    left: 6%;
+  }
+
 }

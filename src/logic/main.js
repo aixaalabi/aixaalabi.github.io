@@ -109,14 +109,6 @@ function renderSlide(element, index) {
       initializeZoomScrolly(element);
       break;
   }
-
-// console.log(
-//   slide.title,
-//   "Scroll height:", element.scrollHeight,
-//   "Client height:", element.clientHeight,
-//   "Scrollable:", element.scrollHeight > element.clientHeight
-// );
-  
 }
 
 function resetSlideScroll() {
@@ -368,92 +360,638 @@ track.addEventListener("touchend", trackTouchEnd, { passive: true });
    SCROLLYTELLING
 ========================================== */
 
-function initializeScrolly(slideElement) {
+async function initializeScrolly(slideElement) {
 
-  const visual = slideElement.querySelector(
-    ".scrolly-visual"
-  );
+  // ==========================================
+  // CLEAN UP PREVIOUS INITIALIZATION
+  // ==========================================
 
-  const steps = slideElement.querySelectorAll(
-    ".scrolly-step"
-  );
+  slideElement._scrollyCleanup?.();
 
-  if (!visual || !steps.length) return;
+  const story = slideElement.querySelector(".scrolly-story");
+  const visual = slideElement.querySelector(".scrolly-visual");
+  const loader = slideElement.querySelector(".scrolly-loader");
 
-  const circle1 = visual.querySelector(".circle-1");
-  const circle2 = visual.querySelector(".circle-2");
-  const circle3 = visual.querySelector(".circle-3");
+  const steps = [
+    ...slideElement.querySelectorAll(".scrolly-step")
+  ];
+
+  const sequences = [
+    ...slideElement.querySelectorAll(".scrolly-sequence")
+  ];
+
+  if (!story || !visual || !sequences.length) return;
+
+  const clamp = (v, min = 0, max = 1) =>
+    Math.max(min, Math.min(max, v));
+
+  const STATIC_SCROLL = 0.5;
+  const ANIMATED_SCROLL = 1;
+
+  let destroyed = false;
+  let ticking = false;
+
+  // ==========================================
+  // LOADING STATE
+  // ==========================================
+
+  if (loader) {
+    loader.classList.remove("hidden");
+  }
+
+  sequences.forEach(sequence => {
+    sequence.style.visibility = "hidden";
+  });
+
+  // ==========================================
+  // WAIT FOR SVG OBJECT TO LOAD
+  // ==========================================
+
+  
+  function loadSVG(object, index) {
+
+    return new Promise((resolve, reject) => {
+
+      const timeout = 60000;
+      const started = Date.now();
+
+      let finished = false;
+
+      const expectedURL = new URL(
+        object.getAttribute("data"),
+        document.baseURI
+      ).href;
+
+      function cleanup() {
+        object.removeEventListener("load", check);
+        object.removeEventListener("error", onError);
+      }
+
+      function succeed(doc) {
+
+        if (finished) return;
+
+        finished = true;
+        cleanup();
+
+        resolve(doc);
+      }
+
+      function fail(error) {
+
+        if (finished) return;
+
+        finished = true;
+        cleanup();
+
+        reject(error);
+      }
+
+      function check() {
+
+        if (finished) return;
+
+        let doc;
+
+        try {
+          doc = object.contentDocument;
+        } catch (error) {
+          return;
+        }
+
+        if (!doc || !doc.documentElement) return;
+
+        // Reject the initial empty document.
+        if (doc.URL === "about:blank") return;
+
+        // Make sure we have an actual SVG document.
+        const root = doc.documentElement;
+
+        if (
+          root.localName !== "svg" ||
+          root.namespaceURI !== "http://www.w3.org/2000/svg"
+        ) {
+          return;
+        }
+
+        succeed(doc);
+      }
+
+      function onError() {
+
+        fail(
+          new Error(`Failed to load SVG ${index + 1}: ${expectedURL}`)
+        );
+
+      }
+
+      object.addEventListener("load", check);
+      object.addEventListener("error", onError);
+
+      // Check immediately in case the SVG is already loaded.
+      check();
+
+      // Continue checking because the initial object load
+      // can expose about:blank before the SVG navigation finishes.
+      const poll = setInterval(() => {
+
+        if (finished) {
+          clearInterval(poll);
+          return;
+        }
+
+        check();
+
+        if (Date.now() - started > timeout) {
+
+          clearInterval(poll);
+
+          fail(
+            new Error(
+              `Timed out waiting for SVG ${index + 1}. ` +
+              `Expected: ${expectedURL}. ` +
+              `Current document: ${object.contentDocument?.URL}`
+            )
+          );
+
+        }
+
+      }, 100);
+
+    });
+
+  }
+
+  // ==========================================
+  // WAIT FOR STYLES AND ANIMATIONS
+  // ==========================================
+
+  function nextFrame() {
+
+    return new Promise(resolve => {
+      requestAnimationFrame(resolve);
+    });
+
+  }
+
+  async function prepareSVG(doc, index) {
+
+    if (
+      doc.URL === "about:blank" ||
+      doc.documentElement?.localName !== "svg"
+    ) {
+      throw new Error("Attempted to prepare an unloaded SVG");
+    }
+    // Wait for SVG fonts, if present.
+    if (doc.fonts?.ready) {
+      await doc.fonts.ready;
+    }
+
+    // Allow browser to calculate SVG styles.
+    await nextFrame();
+    await nextFrame();
+
+    // Force computed styles to be evaluated.
+    const elements = [
+      ...doc.querySelectorAll("*")
+    ];
+
+    const getAnimatedElements = () => {
+
+      return elements.filter(element => {
+
+        const style = window.getComputedStyle(element);
+
+        return style.animationName !== "none";
+
+      });
+
+    };
+
+    // Some browsers may need another rendering cycle
+    // before CSS animations become available.
+    let animatedElements = getAnimatedElements();
+    let attempts = 0;
+
+    while (
+      animatedElements.length > 0 &&
+      attempts < 20
+    ) {
+
+      const animations = collectAnimations(doc);
+
+      if (animations.length > 0) break;
+
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      animatedElements = getAnimatedElements();
+      attempts++;
+
+    }
+
+    const animations = collectAnimations(doc);
+
+    // Pause and prepare every discovered animation.
+    animations.forEach(animation => {
+
+      if (!animation.effect) return;
+
+      // Explicitly override the animation timing.
+      animation.effect.updateTiming({
+        iterations: 1,
+        fill: "both",
+        direction: "normal"
+      });
+
+      // Pause before setting the initial position.
+      animation.pause();
+
+      // Reset to the beginning.
+      animation.currentTime = 0;
+
+    });
+
+    // ==========================================
+    // PREPARE SMIL ANIMATIONS
+    // ==========================================
+
+    const root = doc.documentElement;
+
+    // Discover native SVG animations.
+    const smilAnimations = [
+      ...doc.querySelectorAll(
+        "animate, animateTransform, animateMotion, set"
+      )
+    ];
+
+    // Find the longest SMIL duration (in seconds).
+    const smilDuration = Math.max(
+      0,
+      ...smilAnimations.map(element => {
+
+        const dur = element.getAttribute("dur") || "";
+
+        const match = dur.match(
+          /^([\d.]+)\s*(ms|s|min)?$/
+        );
+
+        if (!match) return 0;
+
+        const value = parseFloat(match[1]);
+
+        switch (match[2]) {
+          case "ms": return value / 1000;
+          case "min": return value * 60;
+          default: return value;
+        }
+
+      })
+    );
+
+    // Pause the native SVG timeline.
+    root.pauseAnimations();
+    root.setCurrentTime(0);
+
+    return {
+      doc,
+      animations,
+      smilDuration,
+      smilAnimations
+    };
+  }
+
+  // ==========================================
+  // COLLECT ANIMATIONS
+  // ==========================================
+
+  function collectAnimations(doc) {
+
+    const found = new Set();
+
+    // Document-level discovery.
+    doc.getAnimations({ subtree: true }).forEach(animation => {
+      found.add(animation);
+    });
+
+    // Element-level fallback.
+    doc.querySelectorAll("*").forEach(element => {
+
+      if (typeof element.getAnimations !== "function") return;
+
+      element.getAnimations().forEach(animation => {
+        found.add(animation);
+      });
+
+    });
+
+    return [...found].filter(animation => animation.effect);
+
+  }
+
+  // ==========================================
+  // LOAD ALL SVG DOCUMENTS
+  // ==========================================
+
+  let documents;
+  let animationGroups;
+
+  try {
+
+    documents = await Promise.all(
+      sequences.map((sequence, index) => loadSVG(sequence, index))
+    );
+
+    if (destroyed || !slideElement.isConnected) return;
+
+    animationGroups = await Promise.all(
+      documents.map((doc, index) => prepareSVG(doc, index))
+    );
+
+    if (destroyed || !slideElement.isConnected) return;
+
+  } catch (error) {
+
+    console.error("Scrolly initialization failed:", error);
+
+    if (loader) {
+      loader.innerHTML = "<p>Unable to load visual sequence.</p>";
+    }
+
+    return;
+
+  }
+
+  // ==========================================
+  // CONFIGURE SCROLL INTERVALS
+  // ==========================================
+
+  // SVG 1: static, half a viewport.
+  // SVG 2 onwards: one viewport per SVG.
+
+  const intervals = sequences.map((sequence, index) => {
+
+    const duration = index === 0
+      ? STATIC_SCROLL
+      : ANIMATED_SCROLL;
+
+    return {
+      start: index === 0
+        ? 0
+        : STATIC_SCROLL + (index - 1) * ANIMATED_SCROLL,
+
+      duration
+    };
+
+  });
+
+  const totalScrollUnits =
+    intervals.reduce((total, interval) => {
+      return Math.max(
+        total,
+        interval.start + interval.duration
+      );
+    }, 0);
+
+  // ==========================================
+  // CACHE ANIMATION TIMINGS
+  // ==========================================
+
+  const timingGroups = animationGroups.map(group => {
+
+    return group.animations.map(animation => {
+
+      const timing = animation.effect.getTiming();
+      const computed = animation.effect.getComputedTiming();
+
+      return {
+        duration: typeof timing.duration === "number"
+          ? timing.duration
+          : computed.duration,
+
+        delay: timing.delay || 0
+      };
+
+    });
+  });
+
+  // ==========================================
+  // STORY HEIGHT
+  // ==========================================
+
+  function setStoryHeight() {
+
+    const vh = slideElement.clientHeight;
+
+    story.style.height =
+      `${(totalScrollUnits + 1) * vh}px`;
+
+    // Narrative step heights follow the same timing.
+    steps.forEach((step, index) => {
+
+      const interval = intervals[index];
+
+      if (interval) {
+        step.style.height =
+          `${interval.duration * vh}px`;
+      }
+
+    });
+
+  }
+
+  setStoryHeight();
+
+  // ==========================================
+  // SCROLL CONTROLLER
+  // ==========================================
 
   const updateScrolly = () => {
 
-    const scrollTop = slideElement.scrollTop;
-    const viewportHeight = slideElement.clientHeight;
-
-    // First transition: circle 1 → circle 2
-    const progress1 = Math.max(0, Math.min(1,
-      (scrollTop - viewportHeight * 0.5) /
-      (viewportHeight * 0.5)
-    ));
-
-    // Second transition: circle 2 → circle 3
-    const progress2 = Math.max(0, Math.min(1,
-      (scrollTop - viewportHeight * 1.5) /
-      (viewportHeight * 0.5)
-    ));
-
-    // Circle opacity
-    circle1.style.opacity = 1 - progress1;
-    circle2.style.opacity = progress1 * (1 - progress2);
-    circle3.style.opacity = progress2;
-
-    // Background colors
-    const color1 = [220, 210, 240];
-    const color2 = [241, 227, 170];
-    const color3 = [185, 223, 203];
-
-    function mixColor(a, b, progress) {
-      return `rgb(${a.map((value, i) =>
-        Math.round(value + (b[i] - value) * progress)
-      ).join(",")})`;
+    if (destroyed) {
+      ticking = false;
+      return;
     }
 
-    const background = progress1 < 1
-      ? mixColor(color1, color2, progress1)
-      : mixColor(color2, color3, progress2);
+    const vh = slideElement.clientHeight;
 
-    visual.style.backgroundColor = background;
+    if (!vh) {
+      ticking = false;
+      return;
+    }
 
-    // First divider
-    visual.style.setProperty(
-      "--divider-1",
-      `${(1 - progress1) * 100}%`
+    const globalProgress = clamp(
+      slideElement.scrollTop / vh,
+      0,
+      totalScrollUnits
     );
 
-    // Second divider
-    visual.style.setProperty(
-      "--divider-2",
-      `${(1 - progress2) * 100}%`
-    );
+    // ------------------------------------------
+    // UPDATE EACH SVG
+    // ------------------------------------------
 
-    visual.style.setProperty(
-      "--progress-1",
-      progress1
-    );
+    sequences.forEach((sequence, index) => {
 
-    visual.style.setProperty(
-      "--progress-2",
-      progress2
-    );
+      const interval = intervals[index];
+
+      const localProgress = clamp(
+        (globalProgress - interval.start) /
+        interval.duration
+      );
+
+      // Control visibility based on scroll position.
+      const hideAfter =
+        sequence.dataset.hideAfter === "true";
+
+      const intervalEnd =
+        interval.start + interval.duration;
+
+      const isVisible =
+        globalProgress >= interval.start &&
+        (globalProgress <= intervalEnd || !hideAfter);
+
+      sequence.style.visibility =
+        isVisible ? "visible" : "hidden";
+
+      // Seek all animations inside this SVG.
+      animationGroups[index].animations.forEach((animation, i) => {
+
+        const { duration, delay } =
+          timingGroups[index][i];
+
+        if (!Number.isFinite(duration)) return;
+
+        const targetTime = clamp(
+          localProgress
+        ) * duration;
+
+        animation.currentTime = delay + targetTime;
+
+      });
+
+      // ==========================================
+      // SYNCHRONIZE SMIL ANIMATIONS
+      // ==========================================
+
+      const group = animationGroups[index];
+
+      if (group.smilAnimations.length) {
+
+        group.doc.documentElement.setCurrentTime(
+          group.smilDuration * localProgress
+        );
+
+      }
+
+      // Useful for additional CSS effects.
+      sequence.style.setProperty(
+        "--sequence-progress",
+        localProgress
+      );
+
+    });
+
+    // ------------------------------------------
+    // UPDATE NARRATIVE STEPS
+    // ------------------------------------------
+
+    const activeStep = intervals.findIndex(interval => {
+
+      return (
+        globalProgress >= interval.start &&
+        globalProgress < interval.start + interval.duration
+      );
+
+    });
+
+    steps.forEach((step, index) => {
+
+      step.classList.toggle(
+        "active",
+        index === activeStep
+      );
+
+    });
+
+    ticking = false;
+
   };
+
+  const requestUpdate = () => {
+
+    if (ticking || destroyed) return;
+
+    ticking = true;
+
+    requestAnimationFrame(updateScrolly);
+
+  };
+
+  // ==========================================
+  // EVENT LISTENERS
+  // ==========================================
 
   slideElement.addEventListener(
     "scroll",
-    updateScrolly,
+    requestUpdate,
     { passive: true }
   );
 
+  const resizeObserver = new ResizeObserver(() => {
+
+    setStoryHeight();
+    requestUpdate();
+
+  });
+
+  resizeObserver.observe(slideElement);
+
+  // ==========================================
+  // CLEANUP
+  // ==========================================
+
+  slideElement._scrollyCleanup = () => {
+
+    destroyed = true;
+
+    slideElement.removeEventListener(
+      "scroll",
+      requestUpdate
+    );
+
+    resizeObserver.disconnect();
+
+    // Leave animations paused.
+    animationGroups.forEach(group => {
+
+      group.animations.forEach(animation => {
+        animation.pause();
+      });
+
+      group.doc.documentElement.pauseAnimations();
+
+    });
+
+  };
+
+  // ==========================================
+  // SHOW THE FINISHED VISUAL
+  // ==========================================
+
+  sequences.forEach((sequence, index) => {
+
+    sequence.style.zIndex = index + 1;
+
+  });
+
+  if (loader) {
+    loader.classList.add("hidden");
+  }
+
+  // Establish initial animation positions.
   updateScrolly();
+
 }
+
 
 function initializeSplitScrolly(slideElement) {
 

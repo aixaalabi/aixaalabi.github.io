@@ -181,25 +181,56 @@
 
   <template id="template-project-1">
     <div class="scrolly-story">
+      <div class="scrolly-visual">
+        <div class="scrolly-sequences">
 
-      <div class="scrolly-visual" data-state="0">
+          <object
+            class="scrolly-sequence"
+            data="./assets/p1/1.svg"
+            data-hide-after="false"
+            type="image/svg+xml">
+          </object>
 
-        <div class="scrolly-background"></div>
+          <object
+            class="scrolly-sequence"
+            data="./assets/p1/2.svg"
+            data-hide-after="true"
+            type="image/svg+xml">
+          </object>
 
-        <svg viewBox="0 0 600 400"
-             class="scrolly-svg"
-             xmlns="http://www.w3.org/2000/svg">
+          <object
+            class="scrolly-sequence"
+            data="./assets/p1/3.svg"
+            data-hide-after="true"
+            type="image/svg+xml">
+          </object>
 
-          <circle class="story-circle circle-1"
-                  cx="300" cy="200" r="65"/>
+          <object
+            class="scrolly-sequence"
+            data="./assets/p1/4.svg"
+            data-hide-after="true"
+            type="image/svg+xml">
+          </object>
 
-          <circle class="story-circle circle-2"
-                  cx="300" cy="200" r="65"/>
+          <object
+            class="scrolly-sequence"
+            data="./assets/p1/5.svg"
+            data-hide-after="false"
+            type="image/svg+xml">
+          </object>
 
-          <circle class="story-circle circle-3"
-                  cx="300" cy="200" r="65"/>
+          <object
+            class="scrolly-sequence"
+            data="./assets/p1/6.svg"
+            data-hide-after="false"
+            type="image/svg+xml">
+          </object>      
+        </div>
 
-        </svg>
+        <div class="scrolly-loader">
+          <div class="scrolly-spinner"></div>
+          <p>Loading visual sequence...</p>
+        </div>
 
         <h1 class="scrolly-title">Project 1</h1>
 
@@ -207,31 +238,30 @@
 
       <div class="scrolly-steps">
 
-        <div class="scrolly-step" data-state="0">
+        <div class="scrolly-step">
           <div class="step-content">
             <h2>01 — Beginning</h2>
-            <p>The first stage of the project. An introduction to the visual concept.</p>
+            <p>Introduction to the project.</p>
           </div>
         </div>
 
-        <div class="scrolly-step" data-state="1">
+        <div class="scrolly-step">
           <div class="step-content">
             <h2>02 — Transformation</h2>
-            <p>As we scroll, the visual language starts to change.</p>
+            <p>The visual language evolves.</p>
           </div>
         </div>
 
-        <div class="scrolly-step" data-state="2">
+        <div class="scrolly-step">
           <div class="step-content">
             <h2>03 — Resolution</h2>
-            <p>The final stage reveals a new color and shape.</p>
+            <p>The final stage of the animation.</p>
           </div>
         </div>
 
       </div>
 
     </div>
-    
   </template>
 
   <template id="template-project-2">
