@@ -113,37 +113,15 @@ function createSlides() {
 ========================================== */
 
 function initializeAllSlides() {
-
   slideElements.forEach((element, index) => {
-
-    const slide = slides[index];
-
-    switch (slide.title) {
-
-      case "Welcome":
-        initializeAixaBackground();
-        break;
-
-      case "Project 1":
-        initializeScrolly(element);
-        break;
-
-      case "Project 2":
-        initializeSplitScrolly(element);
-        break;
-
-      case "Project 3":
-        initializeMotionScrolly(element);
-        break;
-
-      case "Misc":
-        //initializeZoomScrolly(element);
-        break;
-
+    if (slides[index].title === "Welcome") {
+      initializeAixaBackground();
     }
 
+    if (slides[index].type === "scrolly") {
+      initializeScrolly(element);
+    }
   });
-
 }
 
 /* ==========================================
@@ -151,9 +129,7 @@ function initializeAllSlides() {
 ========================================== */
 
 function getSlideTransform(index) {
-
   return `translateX(-${index * (100 / slides.length)}%)`;
-
 }
 
 function updateActiveSlide() {
@@ -412,64 +388,41 @@ initializeCarousel();
 ========================================== */
 
 async function initializeScrolly(slideElement) {
-
-  // ==========================================
-  // CLEAN UP PREVIOUS INITIALIZATION
-  // ==========================================
-
   slideElement._scrollyCleanup?.();
 
   const story = slideElement.querySelector(".scrolly-story");
   const visual = slideElement.querySelector(".scrolly-visual");
   const loader = slideElement.querySelector(".scrolly-loader");
-
-  const steps = [
-    ...slideElement.querySelectorAll(".scrolly-step")
-  ];
-
-  const sequences = [
-    ...slideElement.querySelectorAll(".scrolly-sequence")
-  ];
+  const steps = [...slideElement.querySelectorAll(".scrolly-step")];
+  const sequences = [...slideElement.querySelectorAll(".scrolly-sequence")];
 
   if (!story || !visual || !sequences.length) return;
 
   const clamp = (v, min = 0, max = 1) =>
     Math.max(min, Math.min(max, v));
 
-  const STATIC_SCROLL = 0.5;
-  const ANIMATED_SCROLL = 1;
-
   let destroyed = false;
   let ticking = false;
 
-  // ==========================================
-  // LOADING STATE
-  // ==========================================
-
   slideElement.scrollTop = 0;
   slideElement.classList.add("is-loading");
-
-  if (loader) {
-    loader.classList.remove("hidden");
-  }
+  loader?.classList.remove("hidden");
 
   sequences.forEach(sequence => {
     sequence.style.visibility = "hidden";
+    sequence.style.clipPath = "inset(0)";
   });
 
   // ==========================================
-  // WAIT FOR SVG OBJECT TO LOAD
+  // SVG LOADING
   // ==========================================
 
-  
   function loadSVG(object, index) {
-
     return new Promise((resolve, reject) => {
-
       const timeout = 60000;
       const started = Date.now();
-
       let finished = false;
+      let poll;
 
       const expectedURL = new URL(
         object.getAttribute("data"),
@@ -479,277 +432,176 @@ async function initializeScrolly(slideElement) {
       function cleanup() {
         object.removeEventListener("load", check);
         object.removeEventListener("error", onError);
+        clearInterval(poll);
       }
 
       function succeed(doc) {
-
         if (finished) return;
-
         finished = true;
         cleanup();
-
         resolve(doc);
       }
 
       function fail(error) {
-
         if (finished) return;
-
         finished = true;
         cleanup();
-
         reject(error);
       }
 
       function check() {
-
         if (finished) return;
 
         let doc;
 
         try {
           doc = object.contentDocument;
-        } catch (error) {
+        } catch {
           return;
         }
 
-        if (!doc || !doc.documentElement) return;
+        if (!doc?.documentElement || doc.URL === "about:blank") {
+          return;
+        }
 
-        // Reject the initial empty document.
-        if (doc.URL === "about:blank") return;
-
-        // Make sure we have an actual SVG document.
         const root = doc.documentElement;
 
         if (
           root.localName !== "svg" ||
           root.namespaceURI !== "http://www.w3.org/2000/svg"
-        ) {
-          return;
-        }
+        ) return;
 
         succeed(doc);
       }
 
       function onError() {
-
-        fail(
-          new Error(`Failed to load SVG ${index + 1}: ${expectedURL}`)
-        );
-
+        fail(new Error(
+          `Failed to load SVG ${index + 1}: ${expectedURL}`
+        ));
       }
 
       object.addEventListener("load", check);
       object.addEventListener("error", onError);
 
-      // Check immediately in case the SVG is already loaded.
       check();
 
-      // Continue checking because the initial object load
-      // can expose about:blank before the SVG navigation finishes.
-      const poll = setInterval(() => {
-
-        if (finished) {
-          clearInterval(poll);
-          return;
-        }
+      poll = setInterval(() => {
+        if (finished) return;
 
         check();
 
-        if (Date.now() - started > timeout) {
-
-          clearInterval(poll);
-
-          fail(
-            new Error(
-              `Timed out waiting for SVG ${index + 1}. ` +
-              `Expected: ${expectedURL}. ` +
-              `Current document: ${object.contentDocument?.URL}`
-            )
-          );
-
+        if (!finished && Date.now() - started > timeout) {
+          fail(new Error(
+            `Timed out waiting for SVG ${index + 1}: ${expectedURL}`
+          ));
         }
-
       }, 100);
-
     });
-
   }
 
-  // ==========================================
-  // WAIT FOR STYLES AND ANIMATIONS
-  // ==========================================
-
   function nextFrame() {
+    return new Promise(resolve => requestAnimationFrame(resolve));
+  }
 
-    return new Promise(resolve => {
-      requestAnimationFrame(resolve);
+  function collectAnimations(doc) {
+    const found = new Set();
+
+    doc.getAnimations({ subtree: true }).forEach(animation => {
+      found.add(animation);
     });
 
+    doc.querySelectorAll("*").forEach(element => {
+      if (typeof element.getAnimations !== "function") return;
+
+      element.getAnimations().forEach(animation => {
+        found.add(animation);
+      });
+    });
+
+    return [...found].filter(animation => animation.effect);
   }
 
   async function prepareSVG(doc, index) {
-
     if (
       doc.URL === "about:blank" ||
       doc.documentElement?.localName !== "svg"
     ) {
-      throw new Error("Attempted to prepare an unloaded SVG");
+      throw new Error(`SVG ${index + 1} is not ready`);
     }
-    // Wait for SVG fonts, if present.
+
     if (doc.fonts?.ready) {
       await doc.fonts.ready;
     }
 
-    // Allow browser to calculate SVG styles.
     await nextFrame();
     await nextFrame();
 
-    // Force computed styles to be evaluated.
-    const elements = [
-      ...doc.querySelectorAll("*")
-    ];
+    const elements = [...doc.querySelectorAll("*")];
 
-    const getAnimatedElements = () => {
+    const getAnimatedElements = () =>
+      elements.filter(element =>
+        window.getComputedStyle(element).animationName !== "none"
+      );
 
-      return elements.filter(element => {
-
-        const style = window.getComputedStyle(element);
-
-        return style.animationName !== "none";
-
-      });
-
-    };
-
-    // Some browsers may need another rendering cycle
-    // before CSS animations become available.
     let animatedElements = getAnimatedElements();
     let attempts = 0;
 
-    while (
-      animatedElements.length > 0 &&
-      attempts < 20
-    ) {
-
-      const animations = collectAnimations(doc);
-
-      if (animations.length > 0) break;
+    while (animatedElements.length > 0 && attempts < 20) {
+      if (collectAnimations(doc).length > 0) break;
 
       await new Promise(resolve => setTimeout(resolve, 50));
 
       animatedElements = getAnimatedElements();
       attempts++;
-
     }
 
     const animations = collectAnimations(doc);
 
-    // Pause and prepare every discovered animation.
     animations.forEach(animation => {
-
-      if (!animation.effect) return;
-
-      // Explicitly override the animation timing.
-      animation.effect.updateTiming({
-        fill: "both"
-      });
-
-      // Pause before setting the initial position.
+      animation.effect.updateTiming({ fill: "both" });
       animation.pause();
-
-      // Reset to the beginning.
       animation.currentTime = 0;
-
     });
-
-    // ==========================================
-    // PREPARE SMIL ANIMATIONS
-    // ==========================================
 
     const root = doc.documentElement;
 
-    // Discover native SVG animations.
     const smilAnimations = [
       ...doc.querySelectorAll(
         "animate, animateTransform, animateMotion, set"
       )
     ];
 
-    // Find the longest SMIL duration (in seconds).
     const smilDuration = Math.max(
       0,
       ...smilAnimations.map(element => {
-
-        const dur = element.getAttribute("dur") || "";
-
-        const match = dur.match(
-          /^([\d.]+)\s*(ms|s|min)?$/
-        );
+        const match = (element.getAttribute("dur") || "")
+          .match(/^([\d.]+)\s*(ms|s|min)?$/);
 
         if (!match) return 0;
 
-        const value = parseFloat(match[1]);
+        const value = Number(match[1]);
 
-        switch (match[2]) {
-          case "ms": return value / 1000;
-          case "min": return value * 60;
-          default: return value;
-        }
-
+        return match[2] === "ms" ? value / 1000
+          : match[2] === "min" ? value * 60
+            : value;
       })
     );
 
-    // Pause the native SVG timeline.
     root.pauseAnimations();
     root.setCurrentTime(0);
 
     return {
       doc,
       animations,
-      smilDuration,
-      smilAnimations
+      smilAnimations,
+      smilDuration
     };
   }
 
-  // ==========================================
-  // COLLECT ANIMATIONS
-  // ==========================================
-
-  function collectAnimations(doc) {
-
-    const found = new Set();
-
-    // Document-level discovery.
-    doc.getAnimations({ subtree: true }).forEach(animation => {
-      found.add(animation);
-    });
-
-    // Element-level fallback.
-    doc.querySelectorAll("*").forEach(element => {
-
-      if (typeof element.getAnimations !== "function") return;
-
-      element.getAnimations().forEach(animation => {
-        found.add(animation);
-      });
-
-    });
-
-    return [...found].filter(animation => animation.effect);
-
-  }
-
-  // ==========================================
-  // LOAD ALL SVG DOCUMENTS
-  // ==========================================
-
-  let documents;
   let animationGroups;
 
   try {
-
-    documents = await Promise.all(
+    const documents = await Promise.all(
       sequences.map((sequence, index) => loadSVG(sequence, index))
     );
 
@@ -760,40 +612,35 @@ async function initializeScrolly(slideElement) {
     );
 
     if (destroyed || !slideElement.isConnected) return;
-    
-  } catch (error) {
 
+  } catch (error) {
     console.error("Scrolly initialization failed:", error);
 
     if (loader) {
       loader.innerHTML = "<p>Unable to load visual sequence.</p>";
     }
 
+    slideElement.classList.remove("is-loading");
     return;
-
   }
 
   // ==========================================
-  // CONFIGURE SEQUENTIAL SVG TIMELINE
+  // TIMELINE
   // ==========================================
 
-  // Cache finite animation timings for each SVG.
   const timingGroups = animationGroups.map(group =>
     group.animations.map(animation => {
       const timing = animation.effect.getTiming();
       const computed = animation.effect.getComputedTiming();
 
       const duration = Number.isFinite(computed.duration)
-        ? computed.duration
-        : 0;
+        ? computed.duration : 0;
 
       const iterations = Number.isFinite(timing.iterations)
-        ? timing.iterations
-        : 1;
+        ? timing.iterations : 1;
 
       const delay = Number.isFinite(timing.delay)
-        ? timing.delay
-        : 0;
+        ? timing.delay : 0;
 
       return {
         duration,
@@ -804,25 +651,31 @@ async function initializeScrolly(slideElement) {
     })
   );
 
-  // Calculate each SVG's duration independently.
-  const svgDurations = animationGroups.map((group, index) =>
-    Math.max(
-      0.001,
-      ...timingGroups[index].map(timing => timing.endTime),
-      group.smilDuration * 1000
-    ) / 1000
-  );
-
-  // Build sequential intervals.
   let timelineStart = 0;
 
-  const intervals = svgDurations.map(duration => {
+  const intervals = sequences.map((sequence, index) => {
+    const type = sequence.dataset.scrollyType || "scroll";
+
+    const duration = type === "zoom" ? 2
+      : type === "motion" ? 1
+        : Math.max(
+          0.001,
+          ...timingGroups[index].map(timing => timing.endTime),
+          animationGroups[index].smilDuration * 1000
+        ) / 1000;
+
+    const transition =
+      sequence.dataset.transitionAfter === "split" &&
+        index < sequences.length - 1 ? 1 : 0;
+
     const interval = {
       start: timelineStart,
-      duration
+      duration,
+      transition,
+      type
     };
 
-    timelineStart += duration;
+    timelineStart += duration + transition;
 
     return interval;
   });
@@ -830,184 +683,231 @@ async function initializeScrolly(slideElement) {
   const totalScrollUnits = timelineStart;
 
   // ==========================================
-  // STORY HEIGHT + NARRATIVE TIMING
+  // NARRATIVE
   // ==========================================
 
   const stepStarts = steps.map(step =>
     Number(step.dataset.start)
   );
 
-  // Make sure the HTML timings are valid.
-  if (
-    stepStarts.some((value, index) =>
-      !Number.isFinite(value) ||
-      value < 0 ||
-      (index > 0 && value <= stepStarts[index - 1])
-    )
-  ) {
-    throw new Error(
-      "Narrative data-start values must be increasing numbers."
-    );
+  if (stepStarts.some((value, index) =>
+    !Number.isFinite(value) ||
+    value < 0 ||
+    (index > 0 && value <= stepStarts[index - 1])
+  )) {
+    throw new Error("Narrative data-start values must increase.");
   }
 
   function setStoryHeight() {
-
     const vh = slideElement.clientHeight;
-
-    const lastStepStart = stepStarts.at(-1) || 0;
-
-    // Allow at least one viewport of reading time
-    // after the final text block appears.
-    const narrativeEnd = lastStepStart + 1;
-
-    // The longer timeline determines the story height.
-    const storyEnd = Math.max(
-      totalScrollUnits,
-      narrativeEnd
-    );
+    const narrativeEnd = (stepStarts.at(-1) || 0) + 1;
+    const storyEnd = Math.max(totalScrollUnits, narrativeEnd);
 
     story.style.height = `${(storyEnd + 1) * vh}px`;
 
-    // Each narrative block occupies the time
-    // between its own start and the next block.
     steps.forEach((step, index) => {
-
       const nextStart = stepStarts[index + 1] ?? storyEnd;
-
       step.style.height =
         `${(nextStart - stepStarts[index]) * vh}px`;
-
     });
-
   }
 
   setStoryHeight();
 
   // ==========================================
-  // SCROLL CONTROLLER
+  // ANIMATION CONFIGURATION
   // ==========================================
 
-  const updateScrolly = () => {
+  const motionStart = [
+    { x: 100, y: 200 },
+    { x: 100, y: 300 },
+    { x: 100, y: 400 }
+  ];
 
-    if (destroyed) {
-      ticking = false;
-      return;
-    }
+  const motionEnd = [
+    { x: 800, y: 120 },
+    { x: 650, y: 300 },
+    { x: 800, y: 480 }
+  ];
+
+  const ease = p => p * p * (3 - 2 * p);
+
+  // ==========================================
+  // SCROLL UPDATE
+  // ==========================================
+
+  function updateScrolly() {
+    ticking = false;
+    if (destroyed) return;
 
     const vh = slideElement.clientHeight;
+    if (!vh) return;
 
-    if (!vh) {
-      ticking = false;
-      return;
-    }
+    const progress = slideElement.scrollTop / vh;
 
-    const scrollProgress = slideElement.scrollTop / vh;
-
-    const globalProgress = clamp(
-      scrollProgress,
-      0,
-      totalScrollUnits
-    );
-
-    // ------------------------------------------
-    // UPDATE EACH SVG
-    // ------------------------------------------
-
+    // Reset visibility and clipping.
     sequences.forEach((sequence, index) => {
+      sequence.style.clipPath = "inset(0)";
+      sequence.style.zIndex = index + 1;
+      sequence.style.visibility = "hidden";
+    });
 
-      const interval = intervals[index];
+    // ==========================================
+    // SVG ANIMATIONS
+    // ==========================================
+
+    intervals.forEach((interval, index) => {
+      const group = animationGroups[index];
+      const sequence = sequences[index];
+
+      const end = interval.start + interval.duration;
 
       const localProgress = clamp(
-        (globalProgress - interval.start) /
-        interval.duration
+        (progress - interval.start) / interval.duration
       );
 
-      // Control visibility based on scroll position.
-      const hideAfter =
-        sequence.dataset.hideAfter === "true";
+      const active =
+        progress >= interval.start && progress < end;
 
-      const intervalEnd =
-        interval.start + interval.duration;
+      const transitioning =
+        interval.transition > 0 &&
+        progress >= end &&
+        progress < end + interval.transition;
 
-      const isVisible =
-        globalProgress >= interval.start &&
-        (globalProgress <= intervalEnd || !hideAfter);
+      const hideAfter = sequence.dataset.hideAfter === "true";
 
-      sequence.style.visibility =
-        isVisible ? "visible" : "hidden";
-
-      // Seek animations using SVG-local progress.
-      animationGroups[index].animations.forEach((animation, i) => {
-
-        const timing = timingGroups[index][i];
-
-        if (!Number.isFinite(timing.duration)) return;
-
-        const targetTime =
-          timing.delay +
-          localProgress * timing.duration * timing.iterations;
-
-        if (Number.isFinite(targetTime)) {
-          animation.currentTime = targetTime;
-        }
-
-      });
-
-      // sync SMIL animations
-
-      const group = animationGroups[index];
-      const localTime = localProgress * interval.duration;
-      if (group.smilAnimations.length) {
-
-        group.doc.documentElement.setCurrentTime(
-          localTime
-        );
-
+      if (active || (transitioning && !hideAfter)) {
+        sequence.style.visibility = "visible";
       }
 
-      // Useful for additional CSS effects.
+      // --------------------------------------
+      // NORMAL SCROLL
+      // --------------------------------------
+
+      if (interval.type === "scroll") {
+        group.animations.forEach((animation, i) => {
+          const timing = timingGroups[index][i];
+
+          animation.currentTime =
+            timing.delay +
+            localProgress * timing.duration * timing.iterations;
+        });
+
+        if (group.smilAnimations.length) {
+          group.doc.documentElement.setCurrentTime(
+            localProgress * interval.duration
+          );
+        }
+      }
+
+      // --------------------------------------
+      // ZOOM
+      // --------------------------------------
+
+      if (interval.type === "zoom") {
+        const world = group.doc.querySelector(".zoom-world");
+
+        if (world) {
+          const zoomProgress = Math.min(1, localProgress);
+          const panProgress = clamp(localProgress - 1);
+
+          const zoom = 1 + 11 * ease(zoomProgress);
+          const x = 500 + 50 * ease(panProgress);
+          const y = 300 - 20 * ease(panProgress);
+
+          world.setAttribute(
+            "transform",
+            `translate(${500 - x * zoom} ${300 - y * zoom}) scale(${zoom})`
+          );
+        }
+      }
+
+      // --------------------------------------
+      // MOTION
+      // --------------------------------------
+
+      if (interval.type === "motion") {
+        [".circle-1", ".circle-2", ".circle-3"].forEach(
+          (selector, i) => {
+            const circle = group.doc.querySelector(selector);
+            if (!circle) return;
+
+            circle.setAttribute(
+              "cx",
+              motionStart[i].x +
+              (motionEnd[i].x - motionStart[i].x) * localProgress
+            );
+
+            circle.setAttribute(
+              "cy",
+              motionStart[i].y +
+              (motionEnd[i].y - motionStart[i].y) * localProgress
+            );
+          }
+        );
+      }
+
       sequence.style.setProperty(
         "--sequence-progress",
         localProgress
       );
-
     });
 
-    // ------------------------------------------
-    // UPDATE NARRATIVE STEPS
-    // ------------------------------------------
+    // ==========================================
+    // SPLIT TRANSITIONS
+    // ==========================================
+    // The outgoing SVG remains intact.
+    // The incoming SVG is revealed from bottom
+    // to top using the original split effect.
 
-    // ------------------------------------------
-    // SCROLL-DRIVEN NARRATIVE OPACITY
-    // ------------------------------------------
+    intervals.forEach((interval, index) => {
+      if (!interval.transition) return;
+
+      const transitionStart =
+        interval.start + interval.duration;
+
+      const transitionProgress = clamp(
+        (progress - transitionStart) / interval.transition
+      );
+
+      if (
+        progress < transitionStart ||
+        progress >= transitionStart + interval.transition
+      ) return;
+
+      const outgoing = sequences[index];
+      const incoming = sequences[index + 1];
+
+      outgoing.style.visibility = "visible";
+      outgoing.style.zIndex = index + 1;
+      outgoing.style.clipPath = "inset(0)";
+
+      incoming.style.visibility = "visible";
+      incoming.style.zIndex = index + 2;
+
+      incoming.style.clipPath =
+        `inset(${(1 - transitionProgress) * 100}% 0 0 0)`;
+    });
+
+    // ==========================================
+    // NARRATIVE OPACITY
+    // ==========================================
 
     steps.forEach((step, index) => {
-
       const start = stepStarts[index];
       const nextStart = stepStarts[index + 1];
 
-      const fadeInDuration =
-        Number(step.dataset.fadeIn ?? 0.2);
-
-      const fadeOutDuration =
-        Number(step.dataset.fadeOut ?? 0.2);
-
       const fadeIn = clamp(
-        (scrollProgress - start) / fadeInDuration,
-        0,
-        1
+        (progress - start) /
+        Number(step.dataset.fadeIn ?? 0.2)
       );
 
-      const fadeOut = nextStart === undefined
-        ? 1
-        : clamp(
-            (nextStart - scrollProgress) / fadeOutDuration,
-            0,
-            1
-          );
+      const fadeOut = nextStart === undefined ? 1 : clamp(
+        (nextStart - progress) /
+        Number(step.dataset.fadeOut ?? 0.2)
+      );
 
       const opacity = Math.min(fadeIn, fadeOut);
-
       const content = step.querySelector(".step-content");
 
       if (content) {
@@ -1015,37 +915,31 @@ async function initializeScrolly(slideElement) {
         content.style.visibility =
           opacity > 0 ? "visible" : "hidden";
       }
-
     });
-    ticking = false;
+  }
 
-  };
+  // ==========================================
+  // SCROLL SCHEDULING
+  // ==========================================
 
-  const requestUpdate = () => {
-
+  function requestUpdate() {
     if (ticking || destroyed) return;
 
     ticking = true;
-
     requestAnimationFrame(updateScrolly);
-
-  };
+  }
 
   // ==========================================
-  // EVENT LISTENERS
+  // EVENTS
   // ==========================================
 
-  slideElement.addEventListener(
-    "scroll",
-    requestUpdate,
-    { passive: true }
-  );
+  slideElement.addEventListener("scroll", requestUpdate, {
+    passive: true
+  });
 
   const resizeObserver = new ResizeObserver(() => {
-
     setStoryHeight();
     requestUpdate();
-
   });
 
   resizeObserver.observe(slideElement);
@@ -1055,215 +949,24 @@ async function initializeScrolly(slideElement) {
   // ==========================================
 
   slideElement._scrollyCleanup = () => {
-
     destroyed = true;
 
-    slideElement.removeEventListener(
-      "scroll",
-      requestUpdate
-    );
-
+    slideElement.removeEventListener("scroll", requestUpdate);
     resizeObserver.disconnect();
 
-    // Leave animations paused.
     animationGroups.forEach(group => {
-
-      group.animations.forEach(animation => {
-        animation.pause();
-      });
-
+      group.animations.forEach(animation => animation.pause());
       group.doc.documentElement.pauseAnimations();
-
     });
-
   };
 
-  // ==========================================
-  // SHOW THE FINISHED VISUAL
-  // ==========================================
-
-  sequences.forEach((sequence, index) => {
-
-    sequence.style.zIndex = index + 1;
-
-  });
-
-  if (loader) {
-    loader.classList.add("hidden");
-  }
-
+  loader?.classList.add("hidden");
   slideElement.classList.remove("is-loading");
 
-  // Establish initial animation positions.
   updateScrolly();
 }
 
-
-function initializeSplitScrolly(slideElement) {
-
-  const visual = slideElement.querySelector(".split-visual");
-  const layers = visual.querySelectorAll(".split-layer");
-
-  const update = () => {
-
-    const vh = slideElement.clientHeight;
-    const scroll = slideElement.scrollTop;
-
-    // Determine current transition
-    const index = Math.min(
-      Math.floor(scroll / vh),
-      layers.length - 2
-    );
-
-    // Progress through current transition
-    const progress = Math.min(
-      1,
-      Math.max(0, (scroll - index * vh) / vh)
-    );
-
-    // Hide all layers
-    layers.forEach(layer => {
-      layer.style.clipPath = "inset(0 0 100% 0)";
-      layer.style.zIndex = 0;
-    });
-
-    // Current screen
-    layers[index].style.clipPath = "inset(0)";
-    layers[index].style.zIndex = 1;
-
-    // Next screen: reveal from bottom upwards
-    layers[index + 1].style.clipPath =
-      `inset(${(1 - progress) * 100}% 0 0 0)`;
-
-    layers[index + 1].style.zIndex = 2;
-  };
-
-  slideElement.addEventListener("scroll", update, {
-    passive: true
-  });
-
-  update();
-}
-
-function initializeMotionScrolly(slideElement) {
-
-  const svg = slideElement.querySelector(".motion-svg");
-
-  const circles = [
-    svg.querySelector(".circle-1"),
-    svg.querySelector(".circle-2"),
-    svg.querySelector(".circle-3")
-  ];
-
-  // MODIFY THESE VALUES TO CHANGE FINAL POSITIONS.
-  // Coordinates correspond to the SVG viewBox (1000 x 600).
-
-  const startPositions = [
-    { x: 100, y: 200 },
-    { x: 100, y: 300 },
-    { x: 100, y: 400 }
-  ];
-
-  const endPositions = [
-    { x: 800, y: 120 },
-    { x: 650, y: 300 },
-    { x: 800, y: 480 }
-  ];
-
-  const update = () => {
-
-    const vh = slideElement.clientHeight;
-
-    const progress = Math.max(0, Math.min(
-      1,
-      slideElement.scrollTop / vh
-    ));
-
-    circles.forEach((circle, i) => {
-
-      const start = startPositions[i];
-      const end = endPositions[i];
-
-      const x = start.x + (end.x - start.x) * progress;
-      const y = start.y + (end.y - start.y) * progress;
-
-      circle.setAttribute("cx", x);
-      circle.setAttribute("cy", y);
-
-    });
-
-  };
-
-  slideElement.addEventListener("scroll", update, {
-    passive: true
-  });
-
-  update();
-}
-
-function initializeZoomScrolly(slideElement) {
-
-  const svg = slideElement.querySelector(".zoom-svg");
-  const world = svg.querySelector(".zoom-world");
-
-  const MAX_ZOOM = 12;
-
-  // SVG viewBox dimensions
-  const svgWidth = 1000;
-  const svgHeight = 600;
-
-  // MODIFY THESE TO CHANGE PAN POSITIONS
-  const panStart = { x: 500, y: 300 };
-  const panEnd = { x: 550, y: 280 };
-
-  const ease = p => p * p * (3 - 2 * p);
-
-  const update = () => {
-
-    const vh = slideElement.clientHeight;
-
-    const progress = Math.max(0, Math.min(
-      2,
-      slideElement.scrollTop / vh
-    ));
-
-    // PHASE 1: Zoom
-    const zoomProgress = Math.min(1, progress);
-
-    // PHASE 2: Pan
-    const panProgress = Math.max(
-      0,
-      Math.min(1, progress - 1)
-    );
-
-    const zoom = 1 + (MAX_ZOOM - 1) * ease(zoomProgress);
-
-    // Interpolate target position
-    const targetX = panStart.x +
-      (panEnd.x - panStart.x) * ease(panProgress);
-
-    const targetY = panStart.y +
-      (panEnd.y - panStart.y) * ease(panProgress);
-
-    // Keep target position at the centre of the SVG
-    const tx = svgWidth / 2 - targetX * zoom;
-    const ty = svgHeight / 2 - targetY * zoom;
-
-    world.setAttribute(
-      "transform",
-      `translate(${tx} ${ty}) scale(${zoom})`
-    );
-
-  };
-
-  slideElement.addEventListener("scroll", update, {
-    passive: true
-  });
-
-  update();
-}
-
-async function initializeAixaBackground(clean = false) {
+async function initializeAixaBackground() {
 
   document.querySelectorAll('.aixa-slide .aixa-tool-name').forEach(name => {
     name.addEventListener('touchstart', () => {
@@ -1556,7 +1259,7 @@ async function initializeAixaBackground(clean = false) {
 
   function onPointerLeave() {
     pointerInside = false;
-     setTimeout(() => {
+    setTimeout(() => {
       pointerInsideCanvas = false;
     }, 100)
   }
@@ -1667,200 +1370,78 @@ async function initializeAixaBackground(clean = false) {
   };
 }
 
+
 function initializeSVGMagnifier() {
+    let activeObject = null;
 
-  const lens = document.createElement("div");
-  lens.id = "svg-magnifier";
+    function findObject(x, y) {
+        return [...document.querySelectorAll("object")].find(object => {
+            const rect = object.getBoundingClientRect();
 
-  const content = document.createElement("div");
-  content.id = "svg-magnifier-content";
-
-  lens.appendChild(content);
-  document.body.appendChild(lens);
-
-  let activeObject = null;
-  let activeSVG = null;
-
-  const modifierPressed = event =>
-    event.ctrlKey || event.metaKey;
-
-  function hideLens() {
-    lens.style.display = "none";
-    activeObject = null;
-    activeSVG = null;
-  }
-
-  function findObject(x, y) {
-
-    const objects = document.querySelectorAll(
-      'object[type="image/svg+xml"], object'
-    );
-
-    return [...objects].find(object => {
-
-      const rect = object.getBoundingClientRect();
-
-      const inside =
-        x >= rect.left &&
-        x <= rect.right &&
-        y >= rect.top &&
-        y <= rect.bottom;
-
-      const isSVG =
-        object.contentDocument?.documentElement?.localName === "svg";
-
-      return inside && isSVG;
-
-    }) || null;
-  }
-
-  function activate(object) {
-
-    const doc = object.contentDocument;
-    const svg = doc?.documentElement;
-
-    if (!svg) return false;
-
-    const viewBox = svg.viewBox.baseVal;
-
-    const nativeWidth =
-      svg.width.baseVal.value || viewBox.width;
-
-    const nativeHeight =
-      svg.height.baseVal.value || viewBox.height;
-
-    if (!nativeWidth || !nativeHeight) return false;
-
-    const rect = object.getBoundingClientRect();
-
-    if (
-      rect.width >= nativeWidth &&
-      rect.height >= nativeHeight
-    ) {
-      hideLens();
-      return false;
+            return (
+                x >= rect.left && x <= rect.right &&
+                y >= rect.top && y <= rect.bottom &&
+                object.contentDocument?.documentElement?.localName === "svg"
+            );
+        }) || null;
     }
 
-    activeObject = object;
-    activeSVG = svg;
+    function reset() {
+        if (!activeObject) return;
 
-    content.innerHTML = "";
+        activeObject.style.transform = "";
+        activeObject.style.transformOrigin = "";
+        activeObject.style.zIndex = "";
 
-    const clone = svg.cloneNode(true);
-
-    clone.setAttribute("width", nativeWidth);
-    clone.setAttribute("height", nativeHeight);
-
-    clone.querySelectorAll(
-      "animate, animateTransform, animateMotion, set"
-    ).forEach(element => element.remove());
-
-    clone.querySelectorAll("*").forEach(element => {
-      element.style.animation = "none";
-    });
-
-    content.appendChild(clone);
-    const zoom = 2;
-
-    content.style.width = `${nativeWidth * zoom}px`;
-    content.style.height = `${nativeHeight * zoom}px`;
-
-    clone.setAttribute("width", nativeWidth * zoom);
-    clone.setAttribute("height", nativeHeight * zoom);
-
-    lens.dataset.nativeWidth = nativeWidth;
-    lens.dataset.nativeHeight = nativeHeight;
-
-    return true;
-  }
-
-  function update(event) {
-
-    if (!modifierPressed(event)) {
-      hideLens();
-      return;
+        activeObject = null;
     }
 
-    
+    function update(event) {
+        if (!event.ctrlKey && !event.metaKey) {
+            reset();
+            return;
+        }
 
-    // Keyboard events don't reliably contain pointer coordinates.
-    if (
-      !Number.isFinite(event.clientX) ||
-      !Number.isFinite(event.clientY)
-    ) {
-      return;
+        const object = findObject(event.clientX, event.clientY);
+
+        if (!object) {
+            reset();
+            return;
+        }
+
+        if (activeObject !== object) {
+            reset();
+            activeObject = object;
+        }
+
+        const rect = object.getBoundingClientRect();
+
+        const x = ((event.clientX - rect.left) / rect.width) * 100;
+        const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+        object.style.transformOrigin = `${x}% ${y}%`;
+        object.style.transform = "scale(2)";
+        object.style.zIndex = "9999";
     }
-    
-    const object = findObject(
-      event.clientX,
-      event.clientY
-    );
-    
-    if (!object) {
-      hideLens();
-      return;
+
+    function onKeyUp(event) {
+        if (!event.ctrlKey && !event.metaKey) reset();
     }
 
-    console.log("should work")
+    document.addEventListener("pointermove", update);
+    document.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", reset);
 
-    if (activeObject !== object) {
-      if (!activate(object)) return;
-    }
-
-    
-
-    const rect = object.getBoundingClientRect();
-
-    const nativeWidth = Number(lens.dataset.nativeWidth);
-    const nativeHeight = Number(lens.dataset.nativeHeight);
-
-    const diameter = Math.min(
-      window.innerWidth,
-      window.innerHeight
-    ) * 0.5;
-
-    // Map pointer position into native SVG coordinates.
-    const x = (event.clientX - rect.left) *
-      nativeWidth / rect.width;
-
-    const y = (event.clientY - rect.top) *
-      nativeHeight / rect.height;
-
-    lens.style.width = `${diameter}px`;
-    lens.style.height = `${diameter}px`;
-
-    lens.style.left =
-      `${event.clientX - diameter / 2}px`;
-
-    lens.style.top =
-      `${event.clientY - diameter / 2}px`;
-
-    const zoom = 2;
-
-    content.style.left = `${diameter / 2 - x * zoom}px`;
-    content.style.top = `${diameter / 2 - y * zoom}px`;
-
-    lens.style.display = "block";
-  }
-
-  // Global mouse tracking.
-  document.addEventListener("pointermove", update);
-
-  document.addEventListener("keyup", event => {
-    if (!event.ctrlKey && !event.metaKey) {
-      hideLens();
-    }
-  });
-
-  window.addEventListener("blur", hideLens);
-  window.addEventListener("resize", hideLens);
-
-  return () => {
-    hideLens();
-    document.removeEventListener("pointermove", update);
-    lens.remove();
-  };
+    return () => {
+        reset();
+        document.removeEventListener("pointermove", update);
+        document.removeEventListener("keyup", onKeyUp);
+        window.removeEventListener("blur", reset);
+    };
 }
+
+const cleanupMagnifier = initializeSVGMagnifier();
+
 
 
 /* ==========================================
@@ -1868,4 +1449,3 @@ function initializeSVGMagnifier() {
 ========================================== */
 
 targetSlide = currentSlide;
-const cleanupMagnifier = initializeSVGMagnifier();
