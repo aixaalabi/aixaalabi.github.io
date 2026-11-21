@@ -137,7 +137,7 @@ function initializeAllSlides() {
         break;
 
       case "Misc":
-        initializeZoomScrolly(element);
+        //initializeZoomScrolly(element);
         break;
 
     }

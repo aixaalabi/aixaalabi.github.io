@@ -1,208 +1,208 @@
-
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hi, I'm Aixa</title>
 
-<link rel="icon" type="image/x-icon" href="./a.ico">
-<link rel="stylesheet" href="./src/style/main.css">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hi, I'm Aixa</title>
+
+  <link rel="icon" type="image/x-icon" href="./a.ico">
+  <link rel="stylesheet" href="./src/style/main.css">
 </head>
 
 <body>
 
-<!-- NAVIGATION -->
+  <!-- NAVIGATION -->
 
-<nav id="navigation">
-  <div class="nav-item" data-index="0">
-    <span class="dot"></span>
-    <span class="nav-label">About</span>
-  </div>
-
-  <div class="nav-item active" data-index="1">
-    <span class="dot"></span>
-    <span class="nav-label">Hi</span>
-  </div>
-
-  <div class="nav-item" data-index="2">
-    <span class="dot"></span>
-    <span class="nav-label">Project 1</span>
-  </div>
-
-  <div class="nav-item" data-index="3">
-    <span class="dot"></span>
-    <span class="nav-label">Project 2</span>
-  </div>
-
-  <div class="nav-item" data-index="4">
-    <span class="dot"></span>
-    <span class="nav-label">Project 3</span>
-  </div>
-
-  <div class="last-nav nav-item" data-index="5">
-    <span class="dot"></span>
-    <span class="nav-label">Misc</span>
-  </div>
-</nav>
-
-<!-- ARROWS -->
-
-<button class="arrow left" id="prev" aria-label="Previous slide">
-  <svg width="18" height="31" viewBox="0 0 18 31" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M0 15.2578C3.84182e-08 14.8184 0.175781 14.4316 0.509766 14.0977L14.4316 0.474609C14.748 0.158203 15.1348 -3.99549e-08 15.5918 0C16.4883 7.83732e-08 17.1914 0.685547 17.1914 1.59961C17.1914 2.05664 17.0156 2.44336 16.7344 2.74219L3.9375 15.2578L16.7344 27.7734C17.0156 28.0723 17.1914 28.4766 17.1914 28.916C17.1914 29.8301 16.4883 30.5156 15.5918 30.5156C15.1348 30.5156 14.748 30.3574 14.4316 30.0586L0.509766 16.418C0.175781 16.1016 -3.84182e-08 15.6973 0 15.2578Z" fill="#8295AB"/>
-  </svg>
-</button>
-
-<button class="arrow right" id="next" aria-label="Next slide">
-  <svg width="18" height="31" viewBox="0 0 18 31" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M17.1914 15.2578C17.1914 15.6973 17.0156 16.084 16.6816 16.418L2.75977 30.041C2.44336 30.3574 2.05664 30.5156 1.59961 30.5156C0.703125 30.5156 0 29.8301 0 28.916C0 28.459 0.175781 28.0723 0.457031 27.7734L13.2539 15.2578L0.457031 2.74219C0.175781 2.44336 0 2.03906 0 1.59961C0 0.685547 0.703125 0 1.59961 0C2.05664 0 2.44336 0.158203 2.75977 0.457031L16.6816 14.0977C17.0156 14.4141 17.1914 14.8184 17.1914 15.2578Z" fill="#8295AB"/>
-  </svg>
-
-</button>
-
-<!-- CAROUSEL -->
-
-<main class="carousel">
-  <div class="track" id="track">
-    <section class="slide" id="leftSlide"></section>
-    <section class="slide" id="currentSlide"></section>
-    <section class="slide" id="rightSlide"></section>
-  </div>
-</main>
-
-<div id="slide-templates" hidden>
-
-  <template id="template-about">
-    <div class="slide-content">
-      <h1>About</h1>
-      <p>A little introduction about the work, the ideas and the person behind it.</p>
-      <div class="svg-placeholder">SVG / IMAGE</div>
+  <nav id="navigation">
+    <div class="nav-item" data-index="0">
+      <span class="dot"></span>
+      <span class="nav-label">About</span>
     </div>
-  </template>
 
-  <template id="template-welcome">
-    <div class="aixa-slide">
-      <div class="aixa-profile">
-        <div class="aixa-portrait">
-          <img src="./assets/profile.svg" alt="Aixa Alabi">
+    <div class="nav-item active" data-index="1">
+      <span class="dot"></span>
+      <span class="nav-label">Hi</span>
+    </div>
+
+    <div class="nav-item" data-index="2">
+      <span class="dot"></span>
+      <span class="nav-label">Project 1</span>
+    </div>
+
+    <div class="nav-item" data-index="3">
+      <span class="dot"></span>
+      <span class="nav-label">Project 2</span>
+    </div>
+
+    <div class="nav-item" data-index="4">
+      <span class="dot"></span>
+      <span class="nav-label">Project 3</span>
+    </div>
+
+    <div class="last-nav nav-item" data-index="5">
+      <span class="dot"></span>
+      <span class="nav-label">Misc</span>
+    </div>
+  </nav>
+
+  <!-- ARROWS -->
+
+  <button class="arrow left" id="prev" aria-label="Previous slide">
+    <svg width="18" height="31" viewBox="0 0 18 31" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M0 15.2578C3.84182e-08 14.8184 0.175781 14.4316 0.509766 14.0977L14.4316 0.474609C14.748 0.158203 15.1348 -3.99549e-08 15.5918 0C16.4883 7.83732e-08 17.1914 0.685547 17.1914 1.59961C17.1914 2.05664 17.0156 2.44336 16.7344 2.74219L3.9375 15.2578L16.7344 27.7734C17.0156 28.0723 17.1914 28.4766 17.1914 28.916C17.1914 29.8301 16.4883 30.5156 15.5918 30.5156C15.1348 30.5156 14.748 30.3574 14.4316 30.0586L0.509766 16.418C0.175781 16.1016 -3.84182e-08 15.6973 0 15.2578Z"
+        fill="#8295AB" />
+    </svg>
+  </button>
+
+  <button class="arrow right" id="next" aria-label="Next slide">
+    <svg width="18" height="31" viewBox="0 0 18 31" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M17.1914 15.2578C17.1914 15.6973 17.0156 16.084 16.6816 16.418L2.75977 30.041C2.44336 30.3574 2.05664 30.5156 1.59961 30.5156C0.703125 30.5156 0 29.8301 0 28.916C0 28.459 0.175781 28.0723 0.457031 27.7734L13.2539 15.2578L0.457031 2.74219C0.175781 2.44336 0 2.03906 0 1.59961C0 0.685547 0.703125 0 1.59961 0C2.05664 0 2.44336 0.158203 2.75977 0.457031L16.6816 14.0977C17.0156 14.4141 17.1914 14.8184 17.1914 15.2578Z"
+        fill="#8295AB" />
+    </svg>
+
+  </button>
+
+  <!-- CAROUSEL -->
+
+  <main class="carousel">
+    <div class="track" id="track">
+    </div>
+  </main>
+
+  <div id="slide-templates" hidden>
+
+    <template id="template-about">
+      <div class="slide-content">
+        <h1>About</h1>
+        <p>A little introduction about the work, the ideas and the person behind it.</p>
+        <div class="svg-placeholder">SVG / IMAGE</div>
+      </div>
+    </template>
+
+    <template id="template-welcome">
+      <div class="aixa-slide">
+        <div class="aixa-profile">
+          <div class="aixa-portrait">
+            <img src="./assets/profile.svg" alt="Aixa Alabi">
+          </div>
+
+          <div class="aixa-intro">
+            <div class="aixa-name">
+              <span class="aixa-hi">I am</span>
+              <span class="aixa-logo"><img src="./assets/logo.svg" alt=""></span>
+            </div>
+
+            <div class="aixa-subtitle">
+              and I design digital experiences through curiosity, empathy, and creativity.
+            </div>
+          </div>
         </div>
 
-        <div class="aixa-intro">
-          <div class="aixa-name">
-            <span class="aixa-hi">I am</span>
-            <span class="aixa-logo"><img src="./assets/logo.svg" alt=""></span>
+        <div class="aixa-bottom">
+          <!-- 01: Characteristics -->
+          <div class="aixa-column">
+            <div class="aixa-section-title">01 / WHAT I DO</div>
+
+            <div class="aixa-characteristics">
+              <div>UX Designer</div>
+              <div>Creative Storyteller</div>
+              <div>Problem Solver</div>
+            </div>
           </div>
 
-          <div class="aixa-subtitle">
-            and I design digital experiences through curiosity, empathy, and creativity.
+          <!-- 02: Tools -->
+          <div class="aixa-column">
+            <div class="aixa-section-title">02 / MY TECH</div>
+
+            <div class="aixa-tools">
+              <div class="aixa-tool closed">
+                <div class="aixa-tool-name" tabindex="0">Usability</div>
+                <div class="aixa-tool-details">
+                  User Research · Usability Testing · Accessibility WCAG 2.1 AA · Information Architecture · User Flows
+                </div>
+              </div>
+
+              <div class="aixa-tool closed">
+                <div class="aixa-tool-name" tabindex="0">Figma</div>
+                <div class="aixa-tool-details">
+                  UI/UX Design · Wireframing · Prototyping · Auto Layout · Variables and Tokens · Component Libraries
+                </div>
+              </div>
+
+              <div class="aixa-tool closed">
+                <div class="aixa-tool-name" tabindex="0">Affinity</div>
+                <div class="aixa-tool-details">
+                  Affinity Designer · Affinity Photo · Affinity Publisher · Vector Design · Photo Editing
+                </div>
+              </div>
+
+              <div class="aixa-tool closed">
+                <div class="aixa-tool-name" tabindex="0">Adobe Suite</div>
+                <div class="aixa-tool-details">
+                  Illustrator · Photoshop · InDesign · After Effects
+                </div>
+              </div>
+
+              <div class="aixa-tool closed">
+                <div class="aixa-tool-name" tabindex="0">Procreate</div>
+                <div class="aixa-tool-details">
+                  Digital Illustration · Sketching · Animation · Visual Storytelling
+                </div>
+              </div>
+
+
+              <div class="aixa-tool closed">
+                <div class="aixa-tool-name" tabindex="0">Web dev</div>
+                <div class="aixa-tool-details">
+                  HTML · CSS · JavaScript · Python · Responsive Design
+                </div>
+              </div>
+
+              <div class="aixa-tool closed">
+                <div class="aixa-tool-name" tabindex="0">Gen. AI tools</div>
+                <div class="aixa-tool-details">
+                  Lovable · ChatGPT · Claude · Figma Make · Prompt Engineering · AI-assisted Prototyping
+                </div>
+              </div>
+
+
+
+
+            </div>
           </div>
+
+          <!-- 03: Links -->
+          <div class="aixa-column">
+            <div class="aixa-section-title">03 / FIND ME</div>
+
+            <div class="aixa-links">
+              <a href="mailto:aixaalabi@gmail.com">Email</a>
+              <a href="https://www.linkedin.com/in/aixa-alabi-9b4065150/">LinkedIn</a>
+              <a href="https://www.behance.net/aixaalabi">Behance</a>
+              <a href="https://github.com/aixaalabi">GitHub</a>
+              <a class="download" href="cv.pdf">Curriculum Vitae PDF</a>
+            </div>
+          </div>
+
         </div>
       </div>
+    </template>
 
-      <div class="aixa-bottom">
-        <!-- 01: Characteristics -->
-        <div class="aixa-column">
-          <div class="aixa-section-title">01 / WHAT I DO</div>
+    <template id="template-project-1">
+      <div class="scrolly-story">
+        <div class="scrolly-visual">
+          <div class="scrolly-sequences">
 
-          <div class="aixa-characteristics">
-            <div>UX Designer</div>
-            <div>Creative Storyteller</div>
-            <div>Problem Solver</div>
-          </div>
-        </div>
+            <object class="scrolly-sequence" 
+              data="./assets/p1/all.svg" 
+              data-hide-after="false"
+              type="image/svg+xml">
+            </object>
 
-        <!-- 02: Tools -->
-        <div class="aixa-column">
-          <div class="aixa-section-title">02 / MY TECH</div>
-
-          <div class="aixa-tools">
-            <div class="aixa-tool closed">
-              <div class="aixa-tool-name" tabindex="0">Usability</div>
-              <div class="aixa-tool-details">
-                User Research · Usability Testing · Accessibility WCAG 2.1 AA  · Information Architecture · User Flows
-              </div>
-            </div>   
-
-            <div class="aixa-tool closed">
-              <div class="aixa-tool-name" tabindex="0">Figma</div>
-              <div class="aixa-tool-details">
-                UI/UX Design · Wireframing · Prototyping · Auto Layout · Variables and Tokens · Component Libraries
-              </div>
-            </div>
-
-            <div class="aixa-tool closed">
-              <div class="aixa-tool-name" tabindex="0">Affinity</div>
-              <div class="aixa-tool-details">
-                Affinity Designer · Affinity Photo · Affinity Publisher · Vector Design · Photo Editing
-              </div>
-            </div>
-
-            <div class="aixa-tool closed">
-              <div class="aixa-tool-name" tabindex="0">Adobe Suite</div>
-              <div class="aixa-tool-details">
-                Illustrator · Photoshop · InDesign · After Effects
-              </div>
-            </div>
-
-            <div class="aixa-tool closed">
-              <div class="aixa-tool-name" tabindex="0">Procreate</div>
-              <div class="aixa-tool-details">
-                Digital Illustration · Sketching · Animation · Visual Storytelling
-              </div>
-            </div>
-       
-
-            <div class="aixa-tool closed">
-              <div class="aixa-tool-name" tabindex="0">Web dev</div>
-              <div class="aixa-tool-details">
-                HTML · CSS · JavaScript · Python · Responsive Design
-              </div>
-            </div>
-
-            <div class="aixa-tool closed">
-              <div class="aixa-tool-name" tabindex="0">Gen. AI tools</div>
-              <div class="aixa-tool-details">
-                Lovable · ChatGPT · Claude · Figma Make · Prompt Engineering · AI-assisted Prototyping
-              </div>
-            </div>
-
-
-
-
-          </div>
-        </div>
-
-        <!-- 03: Links -->
-        <div class="aixa-column">
-          <div class="aixa-section-title">03 / FIND ME</div>
-
-          <div class="aixa-links">
-            <a href="mailto:aixaalabi@gmail.com">Email</a>
-            <a href="https://www.linkedin.com/in/aixa-alabi-9b4065150/">LinkedIn</a>
-            <a href="https://www.behance.net/aixaalabi">Behance</a>
-            <a href="https://github.com/aixaalabi">GitHub</a>
-            <a class="download" href="cv.pdf">Curriculum Vitae PDF</a>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </template>
-
-  <template id="template-project-1">
-    <div class="scrolly-story">
-      <div class="scrolly-visual">
-        <div class="scrolly-sequences">
-
-          <object
-            class="scrolly-sequence"
-            data="./assets/p1/all.svg"
-            data-hide-after="false"
-            type="image/svg+xml">
-          </object>
-
-          <!-- <object
+            <!-- <object
             class="scrolly-sequence"
             data="./assets/p1/1.svg"
             data-hide-after="false"
@@ -243,98 +243,98 @@
             data-hide-after="false"
             type="image/svg+xml">
           </object>   -->
+          </div>
+
+          <div class="scrolly-loader">
+            <div class="scrolly-spinner"></div>
+            <p>Loading visual sequence...</p>
+          </div>
+
+          <h1 class="scrolly-title">Project 1</h1>
+
         </div>
 
-        <div class="scrolly-loader">
-          <div class="scrolly-spinner"></div>
-          <p>Loading visual sequence...</p>
-        </div>
+        <div class="scrolly-steps">
 
-        <h1 class="scrolly-title">Project 1</h1>
+          <div class="scrolly-step" data-start="0">
+            <div class="step-content">
+              <h2>01 — Beginning</h2>
+              <p>Introduction to the project.</p>
+            </div>
+          </div>
+
+          <div class="scrolly-step" data-start="1">
+            <div class="step-content">
+              <h2>02 — Transformation</h2>
+              <p>The visual language evolves.</p>
+            </div>
+          </div>
+
+          <div class="scrolly-step" data-start="2.5">
+            <div class="step-content">
+              <h2>03 — Resolution</h2>
+              <p>The final stage of the animation.</p>
+            </div>
+          </div>
+
+          <div class="scrolly-step" data-start="4">
+            <div class="step-content">
+              <h2>04 — Something</h2>
+              <p>Your description here.</p>
+            </div>
+          </div>
+
+          <div class="scrolly-step" data-start="5.5">
+            <div class="step-content">
+              <h2>05 — Something</h2>
+              <p>Your description here.</p>
+            </div>
+          </div>
+
+          <div class="scrolly-step" data-start="7">
+            <div class="step-content">
+              <h2>06 — Something</h2>
+              <p>Your description here.</p>
+            </div>
+          </div>
+
+          <div class="scrolly-step" data-start="8">
+            <div class="step-content">
+              <h2>07 — Something</h2>
+              <p>Your description here.</p>
+            </div>
+          </div>
+
+          <div class="scrolly-step" data-start="9.5">
+            <div class="step-content">
+              <h2>08 — Something else</h2>
+              <p>Your description here.</p>
+            </div>
+          </div>
+
+        </div>
 
       </div>
+    </template>
 
-      <div class="scrolly-steps">
-
-        <div class="scrolly-step" data-start="0">
-          <div class="step-content">
-            <h2>01 — Beginning</h2>
-            <p>Introduction to the project.</p>
-          </div>
-        </div>
-
-        <div class="scrolly-step" data-start="1">
-          <div class="step-content">
-            <h2>02 — Transformation</h2>
-            <p>The visual language evolves.</p>
-          </div>
-        </div>
-
-        <div class="scrolly-step" data-start="2.5">
-          <div class="step-content">
-            <h2>03 — Resolution</h2>
-            <p>The final stage of the animation.</p>
-          </div>
-        </div>
-
-        <div class="scrolly-step" data-start="4">
-          <div class="step-content">
-            <h2>04 — Something</h2>
-            <p>Your description here.</p>
-          </div>
-        </div>
-
-        <div class="scrolly-step" data-start="5.5">
-          <div class="step-content">
-            <h2>05 — Something</h2>
-            <p>Your description here.</p>
-          </div>
-        </div>
-
-        <div class="scrolly-step" data-start="7">
-          <div class="step-content">
-            <h2>06 — Something</h2>
-            <p>Your description here.</p>
-          </div>
-        </div>
-
-        <div class="scrolly-step" data-start="8">
-          <div class="step-content">
-            <h2>07 — Something</h2>
-            <p>Your description here.</p>
-          </div>
-        </div>
-
-        <div class="scrolly-step" data-start="9.5">
-          <div class="step-content">
-            <h2>08 — Something else</h2>
-            <p>Your description here.</p>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </template>
-
-  <template id="template-project-2">
+    <template id="template-project-2">
       <div class="split-story">
 
         <div class="split-visual">
 
           <svg class="split-layer layer-1" viewBox="0 0 1000 600" preserveAspectRatio="none">
-            <rect width="1000" height="600" fill="#dcd2f0"/>
-            <circle cx="500" cy="300" r="100" fill="#f27e68"/>
+            <rect width="1000" height="600" fill="#dcd2f0" />
+            <circle cx="500" cy="300" r="100" fill="#f27e68" />
           </svg>
 
           <svg class="split-layer layer-2" viewBox="0 0 1000 600" preserveAspectRatio="none">
-            <rect width="1000" height="600" fill="#f1e3aa"/>
-            <rect x="350" y="200" width="300" height="200" fill="#5277d9"/>
+            <rect width="1000" height="600" fill="#f1e3aa" />
+            <rect x="350" y="200" width="300" height="200" fill="#5277d9" />
           </svg>
 
           <svg class="split-layer layer-3" viewBox="0 0 1000 600" preserveAspectRatio="none">
-            <rect width="1000" height="600" fill="#b9dfcb"/>
-            <polygon points="500,150 650,450 350,450" fill="#8055b9"/>
+            <rect width="1000" height="600" fill="#b9dfcb" />
+            <polygon points="500,150 650,450 350,450" fill="#8055b9" />
           </svg>
 
         </div>
@@ -346,31 +346,23 @@
         </div>
 
       </div>
-    
-    
-  </template>
 
-  <template id="template-project-3">
-    
+
+    </template>
+
+    <template id="template-project-3">
+
       <div class="motion-story">
 
         <div class="motion-visual">
 
-          <svg viewBox="0 0 1000 600"
-              class="motion-svg"
-              preserveAspectRatio="xMidYMid meet">
+          <svg viewBox="0 0 1000 600" class="motion-svg" preserveAspectRatio="xMidYMid meet">
 
-            <circle class="motion-circle circle-1"
-                    cx="100" cy="200" r="45"
-                    fill="#f27e68"/>
+            <circle class="motion-circle circle-1" cx="100" cy="200" r="45" fill="#f27e68" />
 
-            <circle class="motion-circle circle-2"
-                    cx="100" cy="300" r="45"
-                    fill="#5277d9"/>
+            <circle class="motion-circle circle-2" cx="100" cy="300" r="45" fill="#5277d9" />
 
-            <circle class="motion-circle circle-3"
-                    cx="100" cy="400" r="45"
-                    fill="#8055b9"/>
+            <circle class="motion-circle circle-3" cx="100" cy="400" r="45" fill="#8055b9" />
 
           </svg>
 
@@ -382,47 +374,69 @@
         </div>
 
       </div>
-    
-    
-  </template>
 
-  <template id="template-misc">
+
+    </template>
+
+    <template id="template-misc">
+      <div class="gallery-slide">
+
+        <div class="gallery-grid">
+
+          <a href="./case-study-1/" class="gallery-card">
+            <!-- <img src="./assets/project-1.jpg" alt=""> -->
+            <div class="gallery-overlay">
+              <h2>Project One</h2>
+              <p>A short description of the project.</p>
+            </div>
+          </a>
+
+          <a href="./case-study-2/" class="gallery-card">
+            <!-- <img src="./assets/project-2.jpg" alt=""> -->
+            <div class="gallery-overlay">
+              <h2>Project Two</h2>
+              <p>A short description of the project.</p>
+            </div>
+          </a>
+
+          <a href="./case-study-3/" class="gallery-card">
+            <!-- <img src="./assets/project-3.jpg" alt=""> -->
+            <div class="gallery-overlay">
+              <h2>Project Three</h2>
+              <p>A short description of the project.</p>
+            </div>
+          </a>
+
+        </div>
+      </div>
+    </template>
+
+    
+    <template id="template-none">
 
       <div class="zoom-story">
 
         <div class="zoom-visual">
 
-          <svg class="zoom-svg"
-              viewBox="0 0 1000 600"
-              preserveAspectRatio="xMidYMid meet">
+          <svg class="zoom-svg" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet">
 
             <g class="zoom-world">
 
               <!-- Main rectangle -->
-              <rect x="400" y="250"
-                    width="200" height="100"
-                    fill="#5277d9"
-                    stroke="#ffffff"
-                    stroke-width="3"/>
+              <rect x="400" y="250" width="200" height="100" fill="#5277d9" stroke="#ffffff" stroke-width="3" />
 
               <!-- Circles inside the rectangle -->
-              <circle cx="430" cy="280" r="8"
-                      fill="#f27e68"/>
+              <circle cx="430" cy="280" r="8" fill="#f27e68" />
 
-              <circle cx="480" cy="300" r="8"
-                      fill="#f1e3aa"/>
+              <circle cx="480" cy="300" r="8" fill="#f1e3aa" />
 
-              <circle cx="530" cy="275" r="8"
-                      fill="#8055b9"/>
+              <circle cx="530" cy="275" r="8" fill="#8055b9" />
 
-              <circle cx="570" cy="325" r="8"
-                      fill="#b9dfcb"/>
+              <circle cx="570" cy="325" r="8" fill="#b9dfcb" />
 
-              <circle cx="450" cy="330" r="8"
-                      fill="#ffffff"/>
+              <circle cx="450" cy="330" r="8" fill="#ffffff" />
 
-              <circle cx="550" cy="300" r="8"
-                      fill="#f27e68"/>
+              <circle cx="550" cy="300" r="8" fill="#f27e68" />
 
             </g>
 
@@ -437,11 +451,12 @@
         </div>
 
       </div>
-    
-  </template>
 
-</div>
+    </template>
 
-<script type="module" src="./src/logic/main.js"></script>
+  </div>
+
+  <script type="module" src="./src/logic/main.js"></script>
 </body>
+
 </html>
