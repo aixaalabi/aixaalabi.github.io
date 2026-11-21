@@ -196,10 +196,7 @@
         <div class="scrolly-visual">
           <div class="scrolly-sequences">
 
-            <object class="scrolly-sequence" 
-              data="./assets/p1/all.svg" 
-              data-hide-after="false"
-              type="image/svg+xml">
+            <object class="scrolly-sequence" data="./assets/p1/all.svg" data-hide-after="false" type="image/svg+xml">
             </object>
 
             <!-- <object
@@ -318,64 +315,69 @@
     </template>
 
     <template id="template-project-2">
-      <div class="split-story">
+      <div class="scrolly-story">
+        <div class="scrolly-visual">
+          <div class="scrolly-sequences">
 
-        <div class="split-visual">
+            <object class="scrolly-sequence"
+              data="./assets/p2/1.svg"
+              type="image/svg+xml"
+              data-scrolly-type="scroll"
+              data-transition-after="split">
+            </object>
 
-          <svg class="split-layer layer-1" viewBox="0 0 1000 600" preserveAspectRatio="none">
-            <rect width="1000" height="600" fill="#dcd2f0" />
-            <circle cx="500" cy="300" r="100" fill="#f27e68" />
-          </svg>
+            <object class="scrolly-sequence"
+              data="./assets/p2/2.svg"
+              type="image/svg+xml"
+              data-scrolly-type="scroll"
+              data-transition-after="split">
+            </object>
 
-          <svg class="split-layer layer-2" viewBox="0 0 1000 600" preserveAspectRatio="none">
-            <rect width="1000" height="600" fill="#f1e3aa" />
-            <rect x="350" y="200" width="300" height="200" fill="#5277d9" />
-          </svg>
+            <object class="scrolly-sequence"
+              data="./assets/p2/3.svg"
+              type="image/svg+xml"
+              data-scrolly-type="scroll">
+            </object>
 
-          <svg class="split-layer layer-3" viewBox="0 0 1000 600" preserveAspectRatio="none">
-            <rect width="1000" height="600" fill="#b9dfcb" />
-            <polygon points="500,150 650,450 350,450" fill="#8055b9" />
-          </svg>
+          </div>
 
+          <div class="scrolly-loader">
+            <div class="scrolly-spinner"></div>
+            <p>Loading visual sequence...</p>
+          </div>
         </div>
 
-        <div class="split-steps">
-          <div class="split-step"></div>
-          <div class="split-step"></div>
-          <div class="split-step"></div>
+        <div class="scrolly-steps">
+          <div class="scrolly-step" data-start="0"></div>
+          <div class="scrolly-step" data-start="1"></div>
+          <div class="scrolly-step" data-start="2"></div>
         </div>
-
       </div>
-
-
     </template>
 
     <template id="template-project-3">
+      <div class="scrolly-story">
+        <div class="scrolly-visual">
+          <div class="scrolly-sequences">
 
-      <div class="motion-story">
+            <object class="scrolly-sequence"
+              data="./assets/p3/motion.svg"
+              type="image/svg+xml"
+              data-scrolly-type="motion">
+            </object>
 
-        <div class="motion-visual">
+          </div>
 
-          <svg viewBox="0 0 1000 600" class="motion-svg" preserveAspectRatio="xMidYMid meet">
-
-            <circle class="motion-circle circle-1" cx="100" cy="200" r="45" fill="#f27e68" />
-
-            <circle class="motion-circle circle-2" cx="100" cy="300" r="45" fill="#5277d9" />
-
-            <circle class="motion-circle circle-3" cx="100" cy="400" r="45" fill="#8055b9" />
-
-          </svg>
-
+          <div class="scrolly-loader">
+            <div class="scrolly-spinner"></div>
+            <p>Loading visual sequence...</p>
+          </div>
         </div>
 
-        <div class="motion-steps">
-          <div class="motion-step"></div>
-          <div class="motion-step"></div>
+        <div class="scrolly-steps">
+          <div class="scrolly-step" data-start="0"></div>
         </div>
-
       </div>
-
-
     </template>
 
     <template id="template-misc">
@@ -411,7 +413,7 @@
       </div>
     </template>
 
-    
+
     <template id="template-none">
 
       <div class="zoom-story">

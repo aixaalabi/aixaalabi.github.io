@@ -36,7 +36,7 @@ const slides = [
     title: "Misc",
     bg: "#dcdcdc",
     template: "template-misc",
-    type: "scrolly"
+    type: "standard"
   }
 ];
 
@@ -254,7 +254,6 @@ function navigateTo(index) {
   track.style.transform = getSlideTransform(targetSlide);
 
   const finishAnimation = () => {
-
     currentSlide = targetSlide;
 
     track.style.transition = "none";
@@ -262,38 +261,31 @@ function navigateTo(index) {
 
     // Preserve the original behaviour of resetting scroll.
     resetSlideScroll();
-
     updateActiveSlide();
-
     isAnimating = false;
     animationTimeout = null;
-
   };
 
   if (reducedMotion) {
-
     finishAnimation();
-
   } else {
-
     animationTimeout = setTimeout(
       finishAnimation,
       animationDuration
     );
-
   }
-
 }
+
 
 function goToSlide(direction) {
+    const baseSlide = isAnimating ? targetSlide : currentSlide;
 
-  const nextIndex =
-    (currentSlide + direction + slides.length) %
-    slides.length;
+    const nextIndex =
+        (baseSlide + direction + slides.length) % slides.length;
 
-  navigateTo(nextIndex);
-
+    navigateTo(nextIndex);
 }
+
 
 /* ==========================================
    BUTTONS
@@ -396,7 +388,18 @@ async function initializeScrolly(slideElement) {
   const steps = [...slideElement.querySelectorAll(".scrolly-step")];
   const sequences = [...slideElement.querySelectorAll(".scrolly-sequence")];
 
-  if (!story || !visual || !sequences.length) return;
+  if (!story || !visual || !sequences.length) {
+    console.error("Invalid scrolly structure:", {
+      slide: slideElement.dataset.index,
+      story: !!story,
+      visual: !!visual,
+      sequences: sequences.length
+    });
+
+    loader?.classList.add("hidden");
+    slideElement.classList.remove("is-loading");
+    return;
+  }
 
   const clamp = (v, min = 0, max = 1) =>
     Math.max(min, Math.min(max, v));
@@ -766,8 +769,11 @@ async function initializeScrolly(slideElement) {
         (progress - interval.start) / interval.duration
       );
 
+      const isLast = index === intervals.length - 1;
+
       const active =
-        progress >= interval.start && progress < end;
+          progress >= interval.start &&
+          (progress < end || isLast);
 
       const transitioning =
         interval.transition > 0 &&
