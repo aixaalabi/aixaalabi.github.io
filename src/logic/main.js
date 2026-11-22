@@ -1464,8 +1464,6 @@ document.addEventListener('DOMContentLoaded', () => {
   ).matches;
 
   document.querySelectorAll('.testimonial').forEach(card => {
-    const button = card.querySelector('.testimonial-toggle');
-
     if (canHover) {
       // Clicking pins the hover effect.
       card.addEventListener('click', () => {
@@ -1479,13 +1477,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-    } else if (button) {
+    } else {
       // Touch devices use an explicit toggle button.
-      button.addEventListener('click', () => {
+      card.addEventListener('click', () => {
         const expanded = card.classList.toggle('is-expanded');
-
-        button.setAttribute('aria-expanded', expanded);
-        button.textContent = expanded
+        const toggle = card.querySelector('.testimonial-toggle');
+        toggle.setAttribute('aria-expanded', expanded);
+        toggle.textContent = expanded
           ? 'Show summary ↑'
           : 'Read full testimonial ↓';
       });
