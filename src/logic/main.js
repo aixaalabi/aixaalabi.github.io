@@ -1067,7 +1067,7 @@ async function initializeScrolly(slideElement) {
 async function initializeAixaBackground() {
 
   document.querySelectorAll('.aixa-slide .aixa-tool-name').forEach(name => {
-    name.addEventListener('touchstart', () => {
+    name.addEventListener('click', () => {
       name.closest('.aixa-tool').classList.toggle('closed');
     });
   });
@@ -1547,12 +1547,6 @@ const cleanupMagnifier = initializeSVGMagnifier();
 
 targetSlide = currentSlide;
 
-/* TESTIMONIALS AND ABOUT STRENGTHS */
-
-const canHover = window.matchMedia(
-  '(hover: hover) and (pointer: fine)'
-).matches;
-
 document.querySelectorAll(
   '.testimonial, .about-strength'
 ).forEach(card => {
@@ -1585,35 +1579,23 @@ document.querySelectorAll(
   );
 
   /* TOGGLES IN ABOUT */
+  card.addEventListener('click', () => {
 
-  if (canHover) {
-    card.addEventListener('click', () => {
-      const pinned = card.classList.toggle('is-pinned');
+    const expanded = card.classList.toggle('is-expanded');
 
-      if (card.matches('.about-strength')) {
-        card.setAttribute('aria-expanded', pinned);
-      }
-    });
+    if (card.matches('.about-strength')) {
+      card.setAttribute('aria-expanded', expanded);
+    }
 
-  } else {
-    card.addEventListener('click', () => {
+    const toggle = card.querySelector('.testimonial-toggle');
 
-      const expanded = card.classList.toggle('is-expanded');
-
-      if (card.matches('.about-strength')) {
-        card.setAttribute('aria-expanded', expanded);
-      }
-
-      const toggle = card.querySelector('.testimonial-toggle');
-
-      if (toggle) {
-        toggle.setAttribute('aria-expanded', expanded);
-        toggle.textContent = expanded
-          ? 'Show summary ↑'
-          : 'Read full testimonial ↓';
-      }
-    });
-  }
-
+    if (toggle) {
+      toggle.setAttribute('aria-expanded', expanded);
+      toggle.textContent = expanded
+        ? 'Show summary ↑'
+        : 'Read full testimonial ↓';
+    }
+  });
+  
   
 });
