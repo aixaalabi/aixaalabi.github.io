@@ -15,6 +15,44 @@ body {
   background: #eaeaea;
 }
 
+.hover-reveal {
+  position: relative;
+  display: inline-block;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: #ed1a76;
+  text-underline-offset: 4px;
+  cursor: help;
+}
+
+.hover-reveal::after {
+  content: attr(data-alt);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%) translateY(4px);
+
+  padding: 7px 12px;
+  background: #1F1E3D;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  border-radius: 3px;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+  z-index: 20;
+}
+
+.hover-reveal:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
 /* =====================================
    CAROUSEL
 ===================================== */
@@ -677,6 +715,11 @@ body {
   gap: 20px;
 }
 
+.about-p {
+  padding-top: 15px;
+  border-top: 1px solid rgba(31, 30, 61, .12);
+}
+
 .about-detail {
   padding-bottom: 15px;
   border-bottom: 1px solid rgba(31, 30, 61, .12);
@@ -842,7 +885,7 @@ body {
 
   .testimonial:hover .testimonial-full,
   .testimonial.is-pinned .testimonial-full {
-    display: block;
+    display: block !important;
   }
 
   .testimonial:hover {
@@ -1331,10 +1374,6 @@ body {
 
   .testimonial {
     padding: 20px;
-  }
-
-  .about-testimonials-intro {
-    margin-bottom: 12px !important;
   }
 
   .testimonial-notice {
