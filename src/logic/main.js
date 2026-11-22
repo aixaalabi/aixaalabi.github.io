@@ -54,6 +54,7 @@ let currentSlide = 1;
 let targetSlide = 1;
 let animationTimeout = null;
 let isAnimating = false;
+let restoreSlideOrder = null;
 let aixaActiveCleanup = null;
 let aixaInitId = 0;
 let pointerInsideCanvas = false;
@@ -202,6 +203,10 @@ function cancelAnimation() {
 
   clearTimeout(animationTimeout);
 
+  // Restore the original DOM order if this was a wrap transition.
+  restoreSlideOrder?.();
+  restoreSlideOrder = null;
+
   currentSlide = targetSlide;
 
   track.style.transition = "none";
@@ -276,16 +281,103 @@ function navigateTo(index) {
   }
 }
 
-
 function goToSlide(direction) {
-    const baseSlide = isAnimating ? targetSlide : currentSlide;
 
-    const nextIndex =
-        (baseSlide + direction + slides.length) % slides.length;
+  if (isAnimating) cancelAnimation();
 
+  const lastIndex = slides.length - 1;
+  const nextIndex =
+    (currentSlide + direction + slides.length) % slides.length;
+
+  const wrapLeft = currentSlide === 0 && direction === -1;
+  const wrapRight = currentSlide === lastIndex && direction === 1;
+
+  // Normal navigation.
+  if (!wrapLeft && !wrapRight) {
     navigateTo(nextIndex);
-}
+    return;
+  }
 
+  // Temporarily reposition the DOM to create an adjacent slide.
+  let startIndex;
+  let endIndex;
+
+  if (wrapLeft) {
+
+    const lastSlide = slideElements[lastIndex];
+
+    track.prepend(lastSlide);
+
+    restoreSlideOrder = () => {
+      track.append(lastSlide);
+    };
+
+    startIndex = 1;
+    endIndex = 0;
+
+  } else {
+
+    const firstSlide = slideElements[0];
+
+    track.append(firstSlide);
+
+    restoreSlideOrder = () => {
+      track.prepend(firstSlide);
+    };
+
+    startIndex = lastIndex - 1;
+    endIndex = lastIndex;
+
+  }
+
+  targetSlide = nextIndex;
+  isAnimating = true;
+
+  navItems.forEach((item, i) => {
+    item.classList.toggle("active", i === targetSlide);
+  });
+
+  // Establish the temporary starting position.
+  track.style.transition = "none";
+  track.style.transform = getSlideTransform(startIndex);
+
+  track.offsetHeight;
+
+  // Animate exactly one slide.
+  track.style.transition = reducedMotion
+    ? "none"
+    : `transform ${animationDuration}ms cubic-bezier(.77, 0, .18, 1)`;
+
+  track.style.transform = getSlideTransform(endIndex);
+
+  const finishAnimation = () => {
+
+    // Restore original DOM order.
+    restoreSlideOrder?.();
+    restoreSlideOrder = null;
+
+    currentSlide = targetSlide;
+
+    track.style.transition = "none";
+    track.style.transform = getSlideTransform(currentSlide);
+
+    resetSlideScroll();
+    updateActiveSlide();
+
+    isAnimating = false;
+    animationTimeout = null;
+
+  };
+
+  if (reducedMotion) {
+    finishAnimation();
+  } else {
+    animationTimeout = setTimeout(
+      finishAnimation,
+      animationDuration
+    );
+  }
+}
 
 /* ==========================================
    BUTTONS
@@ -1455,34 +1547,15 @@ const cleanupMagnifier = initializeSVGMagnifier();
 
 targetSlide = currentSlide;
 
-document.addEventListener('DOMContentLoaded', () => {
+/* TESTIMONIALS AND ABOUT STRENGTHS */
 
-  /* TESTIMONIALS */
+const canHover = window.matchMedia(
+  '(hover: hover) and (pointer: fine)'
+).matches;
 
-  const canHover = window.matchMedia(
-    '(hover: hover) and (pointer: fine)'
-  ).matches;
-
-  document.querySelectorAll('.testimonial').forEach(card => {
-    if (canHover) {
-      // Clicking pins the hover effect.
-      card.addEventListener('click', () => {
-        card.classList.toggle('is-pinned');
-      });
-    } else {
-      // Touch devices use an explicit toggle button.
-      card.addEventListener('click', () => {
-        const expanded = card.classList.toggle('is-expanded');
-        const toggle = card.querySelector('.testimonial-toggle');
-        toggle.setAttribute('aria-expanded', expanded);
-        toggle.textContent = expanded
-          ? 'Show summary ↑'
-          : 'Read full testimonial ↓';
-      });
-    }
-  });
-
-
+document.querySelectorAll(
+  '.testimonial, .about-strength'
+).forEach(card => {
   /* NAVIGATION: hide when the active scroller moves */
 
   const nav = document.querySelector(
@@ -1511,4 +1584,36 @@ document.addEventListener('DOMContentLoaded', () => {
     (document.scrollingElement?.scrollTop || window.scrollY) > 3
   );
 
+  /* TOGGLES IN ABOUT */
+
+  if (canHover) {
+    card.addEventListener('click', () => {
+      const pinned = card.classList.toggle('is-pinned');
+
+      if (card.matches('.about-strength')) {
+        card.setAttribute('aria-expanded', pinned);
+      }
+    });
+
+  } else {
+    card.addEventListener('click', () => {
+
+      const expanded = card.classList.toggle('is-expanded');
+
+      if (card.matches('.about-strength')) {
+        card.setAttribute('aria-expanded', expanded);
+      }
+
+      const toggle = card.querySelector('.testimonial-toggle');
+
+      if (toggle) {
+        toggle.setAttribute('aria-expanded', expanded);
+        toggle.textContent = expanded
+          ? 'Show summary ↑'
+          : 'Read full testimonial ↓';
+      }
+    });
+  }
+
+  
 });
