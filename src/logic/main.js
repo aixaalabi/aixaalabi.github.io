@@ -554,6 +554,13 @@ async function initializeScrolly(slideElement) {
     story.insertBefore(traditionalWrapper, visual);
   }
 
+  // Capture the visual's original position in scroll coordinates.
+  // Do this before scrolling, while the visual is not yet sticky.
+  const scrollyStart =
+    visual.getBoundingClientRect().top
+    - slideElement.getBoundingClientRect().top
+    + slideElement.scrollTop;
+
   sequences.forEach(sequence => {
     sequence.style.visibility = "visible";
     sequence.style.clipPath = "inset(0)";
@@ -853,7 +860,7 @@ async function initializeScrolly(slideElement) {
     const storyEnd = Math.max(totalScrollUnits, narrativeEnd);
 
     story.style.height =
-      `${traditionalHeight + storyEnd * vh}px`;
+      `${traditionalHeight + (storyEnd + 1) * vh}px`;
 
     steps.forEach((step, index) => {
       const nextStart = stepStarts[index + 1] ?? storyEnd;
@@ -1075,10 +1082,6 @@ async function initializeScrolly(slideElement) {
   function getScrollyProgress() {
     const scrollTop = slideElement.scrollTop;
     const vh = slideElement.clientHeight;
-
-    // The animation starts when the sticky visual
-    // reaches the top of the viewport.
-    const scrollyStart = visual.offsetTop;
 
     return Math.max(
       0,
