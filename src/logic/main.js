@@ -1449,9 +1449,76 @@ function initializeSVGMagnifier() {
 const cleanupMagnifier = initializeSVGMagnifier();
 
 
-
 /* ==========================================
    INITIALIZE
 ========================================== */
 
 targetSlide = currentSlide;
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  /* TESTIMONIALS */
+
+  const canHover = window.matchMedia(
+    '(hover: hover) and (pointer: fine)'
+  ).matches;
+
+  document.querySelectorAll('.testimonial').forEach(card => {
+    const button = card.querySelector('.testimonial-toggle');
+
+    if (canHover) {
+      // Clicking pins the hover effect.
+      card.addEventListener('click', () => {
+        card.classList.toggle('is-pinned');
+      });
+
+      card.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          card.classList.toggle('is-pinned');
+        }
+      });
+
+    } else if (button) {
+      // Touch devices use an explicit toggle button.
+      button.addEventListener('click', () => {
+        const expanded = card.classList.toggle('is-expanded');
+
+        button.setAttribute('aria-expanded', expanded);
+        button.textContent = expanded
+          ? 'Show summary ↑'
+          : 'Read full testimonial ↓';
+      });
+    }
+  });
+
+
+  /* NAVIGATION: hide when the active scroller moves */
+
+  const nav = document.querySelector(
+    '[data-navigation], #navigation-carousel, ' +
+    '.navigation-carousel, .nav-carousel, .carousel-navigation, nav'
+  );
+
+  if (!nav) return;
+
+  function handleScroll(event) {
+    const target = event.target;
+
+    const scrollTop = target === document
+      ? (document.scrollingElement?.scrollTop || window.scrollY)
+      : (target?.scrollTop || 0);
+
+    nav.classList.toggle('nav-hidden', scrollTop > 3);
+  }
+
+  // Capture scroll events from nested slide containers as well.
+  document.addEventListener('scroll', handleScroll, true);
+
+  // Initial state.
+  nav.classList.toggle(
+    'nav-hidden',
+    (document.scrollingElement?.scrollTop || window.scrollY) > 3
+  );
+
+});
