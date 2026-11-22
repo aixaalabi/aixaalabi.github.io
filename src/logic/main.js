@@ -479,6 +479,11 @@ async function initializeScrolly(slideElement) {
   const loader = slideElement.querySelector(".scrolly-loader");
   const steps = [...slideElement.querySelectorAll(".scrolly-step")];
   const sequences = [...slideElement.querySelectorAll(".scrolly-sequence")];
+  const traditionalElements = [
+    ...slideElement.querySelectorAll('[data-scrolly-type="trad"]')
+  ].filter(element =>
+    !element.parentElement.closest('[data-scrolly-type="trad"]')
+  );
 
   if (!story || !visual || !sequences.length) {
     console.error("Invalid scrolly structure:", {
@@ -503,11 +508,22 @@ async function initializeScrolly(slideElement) {
   slideElement.classList.add("is-loading");
   loader?.classList.remove("hidden");
 
-  sequences.forEach(sequence => {
-    sequence.style.visibility = "hidden";
-    sequence.style.clipPath = "inset(0)";
+  // Traditional elements remain in normal document flow.
+  traditionalElements.forEach(element => {
+    element.style.visibility = "visible";
+    element.style.position = "relative";
+    element.style.inset = "auto";
+    element.style.width = "100%";
+    element.style.height = "100vh";
+    element.style.display = "block";
+    element.style.clipPath = "none";
+    element.style.zIndex = "auto";
   });
 
+  sequences.forEach(sequence => {
+    sequence.style.visibility = "visible";
+    sequence.style.clipPath = "inset(0)";
+  });
   // ==========================================
   // SVG LOADING
   // ==========================================
@@ -795,19 +811,39 @@ async function initializeScrolly(slideElement) {
 
   function setStoryHeight() {
     const vh = slideElement.clientHeight;
+
+    // Two full viewport heights for traditional scrolling:
+    // 1. Meaningless text
+    // 2. Cover SVG
+    const traditionalScrollUnits = 2;
+
     const narrativeEnd = (stepStarts.at(-1) || 0) + 1;
     const storyEnd = Math.max(totalScrollUnits, narrativeEnd);
 
-    story.style.height = `${(storyEnd + 1) * vh}px`;
+    story.style.height =
+      `${(storyEnd + traditionalScrollUnits + 1) * vh}px`;
 
     steps.forEach((step, index) => {
       const nextStart = stepStarts[index + 1] ?? storyEnd;
+
       step.style.height =
         `${(nextStart - stepStarts[index]) * vh}px`;
     });
   }
 
   setStoryHeight();
+
+  const traditionalWrapper =
+    story.querySelector(".scrolly-traditional");
+
+  if (traditionalWrapper) {
+    traditionalWrapper.style.position = "relative";
+    traditionalWrapper.style.width = "100%";
+    traditionalWrapper.style.display = "block";
+
+    traditionalWrapper.style.height =
+      `${traditionalElements.length * slideElement.clientHeight}px`;
+  }
 
   // ==========================================
   // ANIMATION CONFIGURATION
@@ -838,7 +874,7 @@ async function initializeScrolly(slideElement) {
     const vh = slideElement.clientHeight;
     if (!vh) return;
 
-    const progress = slideElement.scrollTop / vh;
+    const progress = getScrollyProgress();
 
     // Reset visibility and clipping.
     sequences.forEach((sequence, index) => {
@@ -864,8 +900,8 @@ async function initializeScrolly(slideElement) {
       const isLast = index === intervals.length - 1;
 
       const active =
-          progress >= interval.start &&
-          (progress < end || isLast);
+        progress >= interval.start &&
+        (progress < end || isLast);
 
       const transitioning =
         interval.transition > 0 &&
@@ -1014,6 +1050,36 @@ async function initializeScrolly(slideElement) {
           opacity > 0 ? "visible" : "hidden";
       }
     });
+  }
+
+  function getScrollyProgress() {
+    const scrollTop = slideElement.scrollTop;
+    const vh = slideElement.clientHeight;
+
+    let traditionalScroll = 0;
+
+    const slideRect = slideElement.getBoundingClientRect();
+
+    traditionalElements.forEach(element => {
+      const rect = element.getBoundingClientRect();
+
+      // Position of the traditional section in scroll coordinates.
+      const start =
+        scrollTop + rect.top - slideRect.top;
+
+      const end = start + element.offsetHeight;
+
+      // Subtract only the portion already scrolled through.
+      traditionalScroll += Math.max(
+        0,
+        Math.min(scrollTop - start, end - start)
+      );
+    });
+
+    return Math.max(
+      0,
+      (scrollTop - traditionalScroll) / vh
+    );
   }
 
   // ==========================================
@@ -1470,72 +1536,72 @@ async function initializeAixaBackground() {
 
 
 function initializeSVGMagnifier() {
-    let activeObject = null;
+  let activeObject = null;
 
-    function findObject(x, y) {
-        return [...document.querySelectorAll("object")].find(object => {
-            const rect = object.getBoundingClientRect();
+  function findObject(x, y) {
+    return [...document.querySelectorAll("object")].find(object => {
+      const rect = object.getBoundingClientRect();
 
-            return (
-                x >= rect.left && x <= rect.right &&
-                y >= rect.top && y <= rect.bottom &&
-                object.contentDocument?.documentElement?.localName === "svg"
-            );
-        }) || null;
+      return (
+        x >= rect.left && x <= rect.right &&
+        y >= rect.top && y <= rect.bottom &&
+        object.contentDocument?.documentElement?.localName === "svg"
+      );
+    }) || null;
+  }
+
+  function reset() {
+    if (!activeObject) return;
+
+    activeObject.style.transform = "";
+    activeObject.style.transformOrigin = "";
+    activeObject.style.zIndex = "";
+
+    activeObject = null;
+  }
+
+  function update(event) {
+    if (!event.ctrlKey && !event.metaKey) {
+      reset();
+      return;
     }
 
-    function reset() {
-        if (!activeObject) return;
+    const object = findObject(event.clientX, event.clientY);
 
-        activeObject.style.transform = "";
-        activeObject.style.transformOrigin = "";
-        activeObject.style.zIndex = "";
-
-        activeObject = null;
+    if (!object) {
+      reset();
+      return;
     }
 
-    function update(event) {
-        if (!event.ctrlKey && !event.metaKey) {
-            reset();
-            return;
-        }
-
-        const object = findObject(event.clientX, event.clientY);
-
-        if (!object) {
-            reset();
-            return;
-        }
-
-        if (activeObject !== object) {
-            reset();
-            activeObject = object;
-        }
-
-        const rect = object.getBoundingClientRect();
-
-        const x = ((event.clientX - rect.left) / rect.width) * 100;
-        const y = ((event.clientY - rect.top) / rect.height) * 100;
-
-        object.style.transformOrigin = `${x}% ${y}%`;
-        object.style.transform = "scale(2)";
-        object.style.zIndex = "9999";
+    if (activeObject !== object) {
+      reset();
+      activeObject = object;
     }
 
-    function onKeyUp(event) {
-        if (!event.ctrlKey && !event.metaKey) reset();
-    }
+    const rect = object.getBoundingClientRect();
 
-    document.addEventListener("pointermove", update);
-    document.addEventListener("keyup", onKeyUp);
-    window.addEventListener("blur", reset);
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
 
-    return () => {
-        reset();
-        document.removeEventListener("pointermove", update);
-        document.removeEventListener("keyup", onKeyUp);
-        window.removeEventListener("blur", reset);
-    };
+    object.style.transformOrigin = `${x}% ${y}%`;
+    object.style.transform = "scale(2)";
+    object.style.zIndex = "9999";
+  }
+
+  function onKeyUp(event) {
+    if (!event.ctrlKey && !event.metaKey) reset();
+  }
+
+  document.addEventListener("pointermove", update);
+  document.addEventListener("keyup", onKeyUp);
+  window.addEventListener("blur", reset);
+
+  return () => {
+    reset();
+    document.removeEventListener("pointermove", update);
+    document.removeEventListener("keyup", onKeyUp);
+    window.removeEventListener("blur", reset);
+  };
 }
 
 const cleanupMagnifier = initializeSVGMagnifier();
@@ -1596,6 +1662,6 @@ document.querySelectorAll(
         : 'Read full testimonial ↓';
     }
   });
-  
-  
+
+
 });

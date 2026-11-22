@@ -716,7 +716,7 @@ body {
 
 .about-intro-layout {
   display: grid;
-  grid-template-columns: 1.5fr 1fr;
+  grid-template-columns: 3fr 1fr;
   gap: 60px;
   align-items: start;
   margin: 25px 20px 0 20px;
