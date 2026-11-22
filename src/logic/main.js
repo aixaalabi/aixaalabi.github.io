@@ -478,11 +478,16 @@ async function initializeScrolly(slideElement) {
   const visual = slideElement.querySelector(".scrolly-visual");
   const loader = slideElement.querySelector(".scrolly-loader");
   const steps = [...slideElement.querySelectorAll(".scrolly-step")];
-  const sequences = [...slideElement.querySelectorAll(".scrolly-sequence")];
   const traditionalElements = [
     ...slideElement.querySelectorAll('[data-scrolly-type="trad"]')
   ].filter(element =>
     !element.parentElement.closest('[data-scrolly-type="trad"]')
+  );
+
+  const sequences = [
+    ...slideElement.querySelectorAll(".scrolly-sequence")
+  ].filter(sequence =>
+    sequence.dataset.scrollyType !== "trad"
   );
 
   if (!story || !visual || !sequences.length) {
@@ -508,17 +513,46 @@ async function initializeScrolly(slideElement) {
   slideElement.classList.add("is-loading");
   loader?.classList.remove("hidden");
 
-  // Traditional elements remain in normal document flow.
-  traditionalElements.forEach(element => {
-    element.style.visibility = "visible";
-    element.style.position = "relative";
-    element.style.inset = "auto";
-    element.style.width = "100%";
-    element.style.height = "100vh";
-    element.style.display = "block";
-    element.style.clipPath = "none";
-    element.style.zIndex = "auto";
-  });
+  // ==========================================
+  // TRADITIONAL DOCUMENT FLOW
+  // ==========================================
+
+  let traditionalWrapper = null;
+
+  if (traditionalElements.length) {
+    traditionalWrapper = document.createElement("div");
+    traditionalWrapper.className = "scrolly-traditional";
+
+    traditionalElements.forEach(element => {
+      traditionalWrapper.appendChild(element);
+
+      Object.assign(element.style, {
+        position: "relative",
+        inset: "auto",
+        width: "100%",
+        display: "block",
+        clipPath: "none",
+        visibility: "visible",
+        zIndex: "auto"
+      });
+
+      // Traditional SVG objects occupy one viewport.
+      // Ordinary HTML elements retain their natural height.
+      if (element.tagName.toLowerCase() === "object") {
+        element.style.height = "100vh";
+      } else {
+        element.style.height = "auto";
+      }
+    });
+
+    Object.assign(traditionalWrapper.style, {
+      position: "relative",
+      width: "100%",
+      display: "block"
+    });
+
+    story.insertBefore(traditionalWrapper, visual);
+  }
 
   sequences.forEach(sequence => {
     sequence.style.visibility = "visible";
@@ -812,16 +846,14 @@ async function initializeScrolly(slideElement) {
   function setStoryHeight() {
     const vh = slideElement.clientHeight;
 
-    // Two full viewport heights for traditional scrolling:
-    // 1. Meaningless text
-    // 2. Cover SVG
-    const traditionalScrollUnits = 2;
+    const traditionalHeight =
+      traditionalWrapper?.offsetHeight || 0;
 
     const narrativeEnd = (stepStarts.at(-1) || 0) + 1;
     const storyEnd = Math.max(totalScrollUnits, narrativeEnd);
 
     story.style.height =
-      `${(storyEnd + traditionalScrollUnits + 1) * vh}px`;
+      `${traditionalHeight + storyEnd * vh}px`;
 
     steps.forEach((step, index) => {
       const nextStart = stepStarts[index + 1] ?? storyEnd;
@@ -832,18 +864,6 @@ async function initializeScrolly(slideElement) {
   }
 
   setStoryHeight();
-
-  const traditionalWrapper =
-    story.querySelector(".scrolly-traditional");
-
-  if (traditionalWrapper) {
-    traditionalWrapper.style.position = "relative";
-    traditionalWrapper.style.width = "100%";
-    traditionalWrapper.style.display = "block";
-
-    traditionalWrapper.style.height =
-      `${traditionalElements.length * slideElement.clientHeight}px`;
-  }
 
   // ==========================================
   // ANIMATION CONFIGURATION
@@ -1056,29 +1076,13 @@ async function initializeScrolly(slideElement) {
     const scrollTop = slideElement.scrollTop;
     const vh = slideElement.clientHeight;
 
-    let traditionalScroll = 0;
-
-    const slideRect = slideElement.getBoundingClientRect();
-
-    traditionalElements.forEach(element => {
-      const rect = element.getBoundingClientRect();
-
-      // Position of the traditional section in scroll coordinates.
-      const start =
-        scrollTop + rect.top - slideRect.top;
-
-      const end = start + element.offsetHeight;
-
-      // Subtract only the portion already scrolled through.
-      traditionalScroll += Math.max(
-        0,
-        Math.min(scrollTop - start, end - start)
-      );
-    });
+    // The animation starts when the sticky visual
+    // reaches the top of the viewport.
+    const scrollyStart = visual.offsetTop;
 
     return Math.max(
       0,
-      (scrollTop - traditionalScroll) / vh
+      (scrollTop - scrollyStart) / vh
     );
   }
 
