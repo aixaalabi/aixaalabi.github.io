@@ -720,7 +720,7 @@ body {
   border-top: 1px solid rgba(31, 30, 61, .12);
 }
 
-.about-detail {
+.about-detail:not(.last-about) {
   padding-bottom: 15px;
   border-bottom: 1px solid rgba(31, 30, 61, .12);
 }
@@ -778,9 +778,6 @@ body {
 ===================================== */
 
 .testimonial-notice {
-  padding: 12px 16px;
-  border-left: 3px solid #8295AB;
-  background: rgba(130, 149, 171, .1);
   font-size: 13px !important;
   font-style: italic;
   margin-bottom: 22px;
