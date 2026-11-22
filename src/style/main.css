@@ -790,7 +790,7 @@ body {
 }
 
 .about-strength p {
-  display: none;
+  /* display: none; REMOVE TO HAVE INTERACTIVE CARDS */
   margin-top: 18px;
   font-size: 15px;
   text-align: center;

@@ -5,7 +5,7 @@
 const slides = [
   {
     title: "About",
-    bg: "#eaeaea",
+    bg: "#F0F4F7",
     template: "template-about",
     type: "standard"
   },
