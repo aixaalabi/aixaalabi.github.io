@@ -23,12 +23,12 @@ const slides = [
     template: "template-project-2",
     type: "scrolly"
   },
-  {
-    title: "Articles",
-    bg: "#dcdcdc",
-    template: "template-articles",
-    type: "standard"
-  }
+  // {
+  //   title: "Articles",
+  //   bg: "#dcdcdc",
+  //   template: "template-articles",
+  //   type: "standard"
+  // }
 ];
 
 const track = document.getElementById("track");
@@ -1604,7 +1604,7 @@ await Promise.all([
   loadProjectTemplate("about"),
   loadProjectTemplate("p1"),
   loadProjectTemplate("p2"),
-  loadProjectTemplate("articles")
+  // loadProjectTemplate("articles")
 ]);
 
 initializeCarousel();
