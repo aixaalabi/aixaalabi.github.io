@@ -12,12 +12,13 @@ const slides = [
     type: "standard"
   },
   {
-    title: "Project 1",
+    title: "Media Dashboard",
     template: "template-project-1",
-    type: "scrolly"
+    type: "scrolly",
+    bg: "#F0F4F7"
   },
   {
-    title: "Project 2",
+    title: "Profile Uploads",
     bg: "#d8dce5",
     template: "template-project-2",
     type: "scrolly"

@@ -366,11 +366,22 @@ body {
 .scrolly-title {
   position: absolute;
   z-index: 10;
-  top: 120px;
-  left: 10%;
-  font-size: clamp(40px, 7vw, 90px);
-  font-weight: 400;
+  top: 10px;
+  left: 8%;
+  width: 86%;
+  max-width: 1150px;
+  margin: 0 auto 15px;
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1.15;
 }
+
+h3.scrolly-title {
+  margin-top: 55px;
+  font-size: clamp(32px, 4vw, 38px);
+}
+
 
 /* =====================================
    SCROLLYTELLING: VISUALS
@@ -386,7 +397,7 @@ body {
   justify-content: center;
   overflow: hidden;
   isolation: isolate;
-  background: #dcd2f0;
+  background: #F0F4F7;
   transition: background-color .7s ease;
 }
 
@@ -513,7 +524,7 @@ body {
 .step-content p {
   font-size: 14px;
   line-height: 1.6;
-  color: #555;
+  color: #1F1E3D;
 }
 
 .story-circle {
@@ -634,10 +645,30 @@ body {
   text-align: center;
 }
 
+/* All labels hidden by default */
+.nav-label {
+  opacity: 0;
+  visibility: hidden;
+}
+
 .nav-item.active .nav-label {
   opacity: 1;
   visibility: visible;
-  transition: opacity 0.25s ease, visibility 0s;
+  animation: hideNavLabel 0.3s ease 1s forwards;
+  transition: none;
+}
+
+.nav-item:hover .nav-label {
+  opacity: 1;
+  visibility: visible;
+  animation: none;
+}
+
+@keyframes hideNavLabel {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
 }
 
 /* Navigation visibility */
@@ -706,14 +737,15 @@ body {
 
 .about-section h2 {
   font-size: clamp(32px, 4vw, 48px);
-  font-weight: 400;
+  font-weight: 800;
   margin: 0 0 30px;
+  letter-spacing: -2px;
 }
 
 .about-section p {
   font-size: 16px;
   line-height: 1.85;
-  color: #555;
+  color: #1F1E3D;
 }
 
 .about-section strong {
@@ -826,7 +858,7 @@ body {
 
 .testimonial-short,
 .testimonial-full {
-  color: #555;
+  color: #1F1E3D;
   font-size: 15px;
   line-height: 1.85;
 }
@@ -1623,6 +1655,7 @@ body {
   box-sizing: border-box;
   color: #302e35;
   text-align: left;
+  background-color: #fefefe;
 
   /* General box sizing */
   * {
@@ -1654,11 +1687,16 @@ body {
     z-index: auto;
     width: 86%;
     max-width: 1150px;
-    margin: 0 auto 35px;
-    font-size: clamp(44px, 6vw, 72px);
-    font-weight: 400;
+    margin: 0 auto 15px;
+    font-size: clamp(32px, 4vw, 48px);
+    font-weight: 800;
     letter-spacing: -2px;
     line-height: 1.15;
+  }
+
+  > h3.scrolly-title {
+    margin-top: 55px;
+    font-size: clamp(32px, 4vw, 38px);
   }
 
   /* Images */
@@ -1666,15 +1704,15 @@ body {
     display: block;
     height: auto;
     object-fit: contain;
-    margin-bottom: 35px;
+    margin-bottom: 20px;
   }
 
   /* Typography */
   p,
   li {
     font-size: 16px;
-    line-height: 1.85;
-    color: #555;
+    line-height: 1.5;
+    color: #1F1E3D;
   }
 
   strong {
@@ -1710,44 +1748,79 @@ body {
 
   li {
     padding-left: 5px;
-    margin-bottom: 8px;
   }
 
   /* Introductory text */
   .intro-header {
     width: 86%;
-    max-width: 850px;
-    margin: 40px auto;
+    text-align: right;
 
     p {
-      font-size: clamp(20px, 2.5vw, 28px);
-      line-height: 1.6;
+      font-size: clamp(20px, 2.5vw, 18px);
+      line-height: 1.2;
       color: #302e35;
     }
   }
 
   /* Disclaimer */
   .disclaimer {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    align-items: center;
+    gap: 20px;
+
     width: 86%;
     max-width: 1150px;
-    margin: 35px auto 55px;
+    margin: 35px auto 35px;
     padding: 20px 25px;
+    
     border-left: 3px solid #ed1a76;
-    background: rgba(255, 255, 255, .55);
+    background: #F0F4F7;
+
+    img {
+      grid-column: 1;
+      grid-row: 1;
+      width: 50px;
+      height: 50px;
+      object-fit: contain;
+    }
+
+    > div {
+      grid-column: 2;
+      grid-row: 1;
+      text-align: left;
+    }
+
+    strong {
+      display: block;
+      margin-bottom: 5px;
+    }
 
     p {
-      margin-top: 8px;
+      margin: 0;
       font-size: 14px;
+      line-height: 1.6;
     }
   }
 
   /* Context layout */
   .context-content {
     display: grid;
-    grid-template-columns: 3fr 2fr;
+    grid-template-columns: 2fr 2fr;
     gap: 60px;
     align-items: start;
   }
+
+  
+  @media (max-width: 1175px) {
+    .context-content {
+      display: block;
+    }
+    .team-diagram-slot {
+      margin-top: 30px;
+      text-align: center;
+    }
+  } 
 
   .context-copy {
     width: 100%;
@@ -1756,28 +1829,17 @@ body {
   .role {
     margin-top: 25px;
     padding-top: 20px;
-    border-top: 1px solid rgba(31, 30, 61, .12);
   }
 
   /* Media placeholders */
   .hero-slot,
-  .team-diagram-slot,
+  /* .team-diagram-slot, */
   .result-detail,
   .result-library,
   .result-dashboard {
     min-width: 0;
     min-height: 250px;
     background: rgba(255, 255, 255, .45);
-  }
-
-  .result-gallery {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 25px;
-
-    > div {
-      width: 100%;
-    }
   }
 
   /* Responsive layout */
@@ -1801,15 +1863,6 @@ body {
     p,
     li {
       font-size: 15px;
-    }
-
-    .context-content {
-      grid-template-columns: 1fr;
-      gap: 30px;
-    }
-
-    .result-gallery {
-      grid-template-columns: 1fr;
     }
 
     > header,
