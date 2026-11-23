@@ -41,7 +41,7 @@ const navItems = document.querySelectorAll(".nav-item");
 
 const animationDuration = 800;
 
-let currentSlide = 1;
+let currentSlide = 2;
 let targetSlide = 1;
 let animationTimeout = null;
 let isAnimating = false;
