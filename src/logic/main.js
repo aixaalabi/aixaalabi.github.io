@@ -35,7 +35,7 @@ const track = document.getElementById("track");
 const navItems = document.querySelectorAll(".nav-item");
 const animationDuration = 800;
 
-let currentSlide = 2;
+let currentSlide = 1;
 let targetSlide = 1;
 let animationTimeout = null;
 let isAnimating = false;
@@ -374,6 +374,24 @@ track.addEventListener("touchend", event => {
 
 async function initializeScrolly(slideElement) {
   slideElement._scrollyCleanup?.();
+  // ==========================================
+  // DEVICE-SPECIFIC SVG SEQUENCES
+  // ==========================================
+
+  const isMobile = window.matchMedia("(max-width: 600px)").matches;
+
+  slideElement.querySelectorAll("object[data-mobile], object[data-desktop]")
+    .forEach(object => {
+      const mobileOnly = object.hasAttribute("data-mobile");
+      const desktopOnly = object.hasAttribute("data-desktop");
+
+      if (
+        (mobileOnly && !isMobile) ||
+        (desktopOnly && isMobile)
+      ) {
+        object.remove();
+      }
+    });
 
   const story = slideElement.querySelector(".scrolly-story");
   const visual = slideElement.querySelector(".scrolly-visual");
@@ -754,7 +772,6 @@ async function initializeScrolly(slideElement) {
       !Number.isInteger(sequenceIndex) ||
       !Number.isFinite(sequenceProgress) ||
       sequenceProgress < 0 ||
-      sequenceProgress > 1 ||
       !intervals[sequenceIndex]
     ) {
       throw new Error(
@@ -763,7 +780,6 @@ async function initializeScrolly(slideElement) {
     }
 
     const interval = intervals[sequenceIndex];
-
     return interval.start +
       sequenceProgress * interval.duration;
   });
@@ -1540,7 +1556,7 @@ function checkScrollForNav() {
   }
 
   backToTop?.addEventListener("click", () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.scrollTo({ top: 0 });
   });
 
   // Capture scroll events from nested slide containers as well.

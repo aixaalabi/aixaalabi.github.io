@@ -382,18 +382,6 @@ h3.scrolly-title {
   font-size: clamp(32px, 4vw, 38px);
 }
 
-p.scrolly-subtitle {
-  position: absolute;
-  z-index: 10;
-  top: 120px;
-  left: 8%;
-  font-weight: 800;
-  font-size: 16px;
-  line-height: 1.5;
-  color: #1F1E3D;
-}
-
-
 /* =====================================
    SCROLLYTELLING: VISUALS
 ===================================== */
@@ -526,6 +514,16 @@ p.scrolly-subtitle {
   justify-content: flex-start;
 
   padding: 0 10%;
+}
+
+.scrolly-step.position-top {
+  align-items: flex-start;
+  padding-top: 150px;
+}
+
+.scrolly-step.position-bottom {
+  align-items: flex-end;
+  bottom: -50px
 }
 
 .step-content {
@@ -1131,19 +1129,19 @@ p.scrolly-subtitle {
 }
 
 .gallery-image-1 {
-  background-image: url("../../assets/misc/supernext.jpg");
+  background-image: url("../../assets/misc/videos.jpg");
 }
 
 .gallery-image-2 {
-  background-image: url("../../assets/misc/vehicle-profile.jpg");
+  background-image: url("../../assets/misc/profiles.jpg");
 }
 
 .gallery-image-3 {
-  background-image: url("../../assets/misc/accessholding.jpg");
+  background-image: url("../../assets/misc/redesign.png");
 }
 
 .gallery-image-4 {
-  background-image: url("../../assets/misc/hummingbird.jpg");
+  background-image: url("../../assets/misc/airlines.png");
 }
 
 .gallery-overlay {
@@ -1967,3 +1965,4 @@ p.scrolly-subtitle {
   background: #222;
   color: white;
 }
+
