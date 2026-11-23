@@ -950,22 +950,26 @@ async function initializeScrolly(slideElement) {
     });
     
     // ==========================================
-    // NARRATIVE VISIBILITY
+    // NARRATIVE POSITIONING
     // ==========================================
 
     steps.forEach((step, index) => {
       const start = stepPositions[index];
       const nextStart = stepPositions[index + 1];
 
-      const active =
-        progress >= start &&
-        (nextStart === undefined || progress < nextStart);
+      // The box crosses the viewport centre at its data-at position.
+      const distanceFromCenter = (start - progress) * vh;
+
+      step.style.transform =
+        `translateY(${distanceFromCenter}px)`;
 
       const content = step.querySelector(".step-content");
 
       if (content) {
         content.style.visibility =
-          active ? "visible" : "hidden";
+          nextStart === undefined || progress < nextStart
+            ? "visible"
+            : "hidden";
       }
     });
   }
@@ -1521,8 +1525,29 @@ function checkScrollForNav() {
     nav.classList.toggle('nav-hidden', scrollTop > 3);
   }
 
+  // ==========================================
+  // SCROLLY END ACTIONS
+  // ==========================================
+  const story = document.querySelector(".scrolly-story");
+  const endActions = document.getElementById("scrolly-end-actions");
+  const backToTop = document.getElementById("back-to-top");
+
+  function updateEndActions() {
+    if (!story || !endActions) return;
+    const storyBottom = story.getBoundingClientRect().bottom;
+    const finished = storyBottom <= window.innerHeight + 2;
+    endActions.classList.toggle("visible", finished);
+  }
+
+  backToTop?.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
   // Capture scroll events from nested slide containers as well.
-  document.addEventListener('scroll', handleScroll, true);
+  document.addEventListener('scroll', (e) => {
+    handleScroll(e);
+    updateEndActions();
+  }, true);
 
   // Initial state.
   nav.classList.toggle(

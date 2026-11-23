@@ -1,28 +1,88 @@
 <template id="template-project-2">
+  <div class="regular-page">
+
+    <h2 class="scrolly-title">Vehicle Profile Uploads</h2>
+
+    <img src="./assets/p2/cover.svg" alt="Vehicle Profile Uploads">
+
+    <div class="intro-header">
+      <p>
+        How do you make a technically complex process as easy as 1-2-3?
+      </p>
+    </div>
+
+   <aside class="disclaimer">
+    <img src="./assets/icons/disclaimer.svg" alt="Disclaimer">
+    <div>
+      <strong>Disclaimer</strong>
+      <p>
+        To maintain confidentiality, content and visuals have been simplified. No real client data is shown. 
+      </p>
+    </div>
+  </aside>
+
+    
+    <h3 class="scrolly-title">Context</h3>
+    
+
+    <div class="context-content">
+
+      <div class="context-copy">
+
+        <p>
+          <strong>Industry:</strong> Automotive
+        </p>
+
+        <ul>
+          <li>
+            A <strong>multi-brand concept</strong> spanning mobile applications and in-vehicle HMI
+          </li>
+          <li>
+            <strong>Complex technical requirements</strong> and regulatory constraints
+          </li>
+          <li>
+            Existing brand guidelines and <strong>design-system constraints</strong>
+          </li>
+          <li>
+            An <strong>early-stage concept</strong> when I joined the project
+          </li>
+        </ul>
+
+        <p class="role">
+          <strong>My role:</strong> I led the end-to-end UX design, 
+          translating user stories into flows, developing prototypes, 
+          and pitching the concept. I also took and active role in user 
+          research, ensuring design decisions were grounded in real needs.
+        </p>
+
+      </div>
+
+      <div class="team-diagram-slot">
+        <img style="max-width:100%" src="./assets/p2/team.svg" alt="Team Configuration">
+      </div>
+
+    </div>
+  </div>
+
   <div class="scrolly-story">
+    
+    <h3 class="scrolly-title">The Result </h3>
+    <p class="scrolly-subtitle">Simplicity up front</p>
+    
     <div class="scrolly-visual">
       <div class="scrolly-sequences">
         <object class="scrolly-sequence" data="./assets/p2/1.svg" type="image/svg+xml" data-scrolly-type="scroll"
-          data-transition-after="split">
-        </object>
-
-        <object class="scrolly-sequence" data="./assets/p3/motion.svg" type="image/svg+xml" data-scrolly-type="motion"
-          data-transition-after="split">
+          data-transition-after="scroll">
         </object>
 
         <object class="scrolly-sequence" data="./assets/p2/2.svg" type="image/svg+xml" data-scrolly-type="scroll"
-          data-transition-after="split">
+          data-transition-after="scroll">
         </object>
 
         <object class="scrolly-sequence" data="./assets/p2/3.svg" type="image/svg+xml" data-scrolly-type="scroll"
-          data-transition-after="split">
-        </object>
-
-        <object class="scrolly-sequence" data="./assets/p3/motion.svg" type="image/svg+xml" data-scrolly-type="motion"
           data-transition-after="scroll">
         </object>
       </div>
-
       <div class="scrolly-loader">
         <div class="scrolly-spinner"></div>
         <p>Loading visual sequence...</p>
@@ -30,9 +90,43 @@
     </div>
 
     <div class="scrolly-steps">
-      <div class="scrolly-step" data-at="0:0.435"></div>
-      <div class="scrolly-step" data-at="0:0.535"></div>
-      <div class="scrolly-step" data-at="0:0.635"></div>
+      <div class="scrolly-step" data-at="0:0.235">
+        <div class="step-content">
+          <h2>Scattered actions.</h2>
+          <p>Essential content actions (upload & search) were scattered across the interface.</p>
+        </div>
+      </div>
+
+      <div class="scrolly-step" data-at="0:0.335">
+        <div class="step-content">
+          <h2>Browse, and the actions are gone.</h2>
+          <p>As users scrolled through their content library, these actions disappeared, forcing them to return to the top to search or upload content.</p>
+        </div>
+      </div>
+
+      <div class="scrolly-step" data-at="0:0.435">
+        <div class="step-content">
+          <h2>One central hub.</h2>
+          <p>I brought the essential content actions together in a bottom action bar, following a navigation pattern users are increasingly familiar with.</p>
+        </div>
+      </div>
+
+      <div class="scrolly-step" data-at="0:0.535">
+        <div class="step-content">
+          <h2>Always accessible. </h2>
+          <p>The action bar keeps essential controls within reach, no matter how far users scroll through their library.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="scrolly-end-actions" id="scrolly-end-actions">
+      <button class="end-button" id="back-to-top">
+        Back to top ↑
+      </button>
+
+      <a href="./project-2.html" class="end-button">
+        Next project →
+      </a>
     </div>
   </div>
 </template>
