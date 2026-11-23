@@ -738,34 +738,48 @@ async function initializeScrolly(slideElement) {
   // NARRATIVE
   // ==========================================
 
-  const stepStarts = steps.map(step =>
-    Number(step.dataset.start)
-  );
+  
+  // ==========================================
+  // NARRATIVE TIMING
+  // ==========================================
 
-  console.table(intervals.map((interval, index) => ({
-    sequence: index,
-    file: sequences[index].getAttribute("data"),
-    start: interval.start,
-    duration: interval.duration,
-    transition: interval.transition,
-    end: interval.start + interval.duration + interval.transition,
-    animations: animationGroups[index].animations.length,
-    smilDuration: animationGroups[index].smilDuration
-  })));
+  const stepPositions = steps.map(step => {
+    const [sequenceValue, progressValue] =
+      (step.dataset.at || "").split(":");
 
-  console.log("Total timeline:", totalScrollUnits);
-  console.log("Narrative starts:", stepStarts);
+    const sequenceIndex = Number(sequenceValue);
+    const sequenceProgress = Number(progressValue);
 
-  if (stepStarts.some((value, index) =>
-    !Number.isFinite(value) ||
-    value < 0 ||
-    value >= totalScrollUnits ||
-    (index > 0 && value <= stepStarts[index - 1])
+    if (
+      !Number.isInteger(sequenceIndex) ||
+      !Number.isFinite(sequenceProgress) ||
+      sequenceProgress < 0 ||
+      sequenceProgress > 1 ||
+      !intervals[sequenceIndex]
+    ) {
+      throw new Error(
+        `Invalid data-at value: ${step.dataset.at}`
+      );
+    }
+
+    const interval = intervals[sequenceIndex];
+
+    return interval.start +
+      sequenceProgress * interval.duration;
+  });
+
+  if (stepPositions.some((position, index) =>
+    !Number.isFinite(position) ||
+    (index > 0 && position <= stepPositions[index - 1])
   )) {
     throw new Error(
-      "Narrative data-start values must increase and remain within the SVG timeline."
+      "Narrative data-at values must increase."
     );
   }
+
+  // ==========================================
+  // STORY HEIGHT
+  // ==========================================
 
   function setStoryHeight() {
     const vh = slideElement.clientHeight;
@@ -773,21 +787,8 @@ async function initializeScrolly(slideElement) {
     const traditionalHeight =
       traditionalWrapper?.offsetHeight || 0;
 
-    // The SVG timeline determines the entire story duration.
-    const storyEnd = totalScrollUnits;
-
     story.style.height =
-      `${traditionalHeight + (storyEnd + 1) * vh}px`;
-
-    // Each narrative step occupies its corresponding
-    // interval in the SVG timeline.
-    steps.forEach((step, index) => {
-      const nextStart =
-        stepStarts[index + 1] ?? storyEnd;
-
-      step.style.height =
-        `${(nextStart - stepStarts[index]) * vh}px`;
-    });
+      `${traditionalHeight + (totalScrollUnits + 1) * vh}px`;
   }
 
   setStoryHeight();
@@ -947,32 +948,24 @@ async function initializeScrolly(slideElement) {
       incoming.style.clipPath =
         `inset(${(1 - transitionProgress) * 100}% 0 0 0)`;
     });
-
+    
     // ==========================================
-    // NARRATIVE OPACITY
+    // NARRATIVE VISIBILITY
     // ==========================================
 
     steps.forEach((step, index) => {
-      const start = stepStarts[index];
-      const nextStart = stepStarts[index + 1];
+      const start = stepPositions[index];
+      const nextStart = stepPositions[index + 1];
 
-      const fadeIn = clamp(
-        (progress - start) /
-        Number(step.dataset.fadeIn ?? 0.2)
-      );
+      const active =
+        progress >= start &&
+        (nextStart === undefined || progress < nextStart);
 
-      const fadeOut = nextStart === undefined ? 1 : clamp(
-        (nextStart - progress) /
-        Number(step.dataset.fadeOut ?? 0.2)
-      );
-
-      const opacity = Math.min(fadeIn, fadeOut);
       const content = step.querySelector(".step-content");
 
       if (content) {
-        content.style.opacity = opacity;
         content.style.visibility =
-          opacity > 0 ? "visible" : "hidden";
+          active ? "visible" : "hidden";
       }
     });
   }
