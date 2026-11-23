@@ -742,6 +742,20 @@ async function initializeScrolly(slideElement) {
     Number(step.dataset.start)
   );
 
+  console.table(intervals.map((interval, index) => ({
+    sequence: index,
+    file: sequences[index].getAttribute("data"),
+    start: interval.start,
+    duration: interval.duration,
+    transition: interval.transition,
+    end: interval.start + interval.duration + interval.transition,
+    animations: animationGroups[index].animations.length,
+    smilDuration: animationGroups[index].smilDuration
+  })));
+
+  console.log("Total timeline:", totalScrollUnits);
+  console.log("Narrative starts:", stepStarts);
+
   if (stepStarts.some((value, index) =>
     !Number.isFinite(value) ||
     value < 0 ||
