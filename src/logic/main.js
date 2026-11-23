@@ -1,7 +1,3 @@
-/* ==========================================
-   SLIDE CONTENT
-========================================== */
-
 const slides = [
   {
     title: "About",
@@ -26,12 +22,12 @@ const slides = [
     template: "template-project-2",
     type: "scrolly"
   },
-  {
-    title: "Project 3",
-    bg: "#e5d9d9",
-    template: "template-project-3",
-    type: "scrolly"
-  },
+  // {
+  //   title: "Project 3",
+  //   bg: "#e5d9d9",
+  //   template: "template-project-3",
+  //   type: "scrolly"
+  // },
   {
     title: "Misc",
     bg: "#dcdcdc",
@@ -39,11 +35,6 @@ const slides = [
     type: "standard"
   }
 ];
-
-
-/* ==========================================
-   CAROUSEL SETUP — PERSISTENT SLIDES
-========================================== */
 
 const track = document.getElementById("track");
 const navItems = document.querySelectorAll(".nav-item");
@@ -66,16 +57,11 @@ const reducedMotion = window.matchMedia(
 // Store all slide elements permanently.
 const slideElements = [];
 
-/* ==========================================
-   CREATE ALL SLIDES ONCE
-========================================== */
-
 function createSlides() {
-
   track.replaceChildren();
+  track.style.setProperty("--slide-count", slides.length);
 
   slides.forEach((slide, index) => {
-
     const template = document.getElementById(
       slide.template
     );
@@ -96,22 +82,13 @@ function createSlides() {
       element.classList.add("scrolly-slide");
     }
 
-    // Clone exactly once during initial setup.
     element.appendChild(
       template.content.cloneNode(true)
     );
-
     track.appendChild(element);
-
     slideElements.push(element);
-
   });
-
 }
-
-/* ==========================================
-   INITIALIZE EACH SLIDE EXACTLY ONCE
-========================================== */
 
 function initializeAllSlides() {
   slideElements.forEach((element, index) => {
@@ -125,22 +102,14 @@ function initializeAllSlides() {
   });
 }
 
-/* ==========================================
-   SLIDE POSITIONING
-========================================== */
-
 function getSlideTransform(index) {
   return `translateX(-${index * (100 / slides.length)}%)`;
 }
 
 function updateActiveSlide() {
-
   slideElements.forEach((element, index) => {
-
     const active = index === currentSlide;
-
     element.inert = !active;
-
     element.setAttribute(
       "aria-hidden",
       String(!active)
@@ -148,59 +117,33 @@ function updateActiveSlide() {
 
   });
 
-  navItems.forEach((item, index) => {
+  navItems.forEach(item => {
+    const index = Number(item.dataset.index);
 
     item.classList.toggle(
       "active",
       index === currentSlide
     );
-
   });
-
 }
-
-/* ==========================================
-   RESET SCROLL POSITIONS
-========================================== */
 
 function resetSlideScroll() {
-
   slideElements.forEach(element => {
-
     element.scrollTop = 0;
     element.scrollLeft = 0;
-
   });
-
 }
-
-/* ==========================================
-   INITIAL POSITION
-========================================== */
 
 function initializeCarousel() {
-
   createSlides();
-
-  // Set the initial position without animation.
   track.style.transition = "none";
   track.style.transform = getSlideTransform(currentSlide);
-
   updateActiveSlide();
-
-  // Initialize all slide functionality once.
   initializeAllSlides();
-
 }
 
-/* ==========================================
-   CANCEL ONGOING ANIMATION
-========================================== */
-
 function cancelAnimation() {
-
   if (!isAnimating) return;
-
   clearTimeout(animationTimeout);
 
   // Restore the original DOM order if this was a wrap transition.
@@ -216,15 +159,9 @@ function cancelAnimation() {
   animationTimeout = null;
 
   updateActiveSlide();
-
 }
 
-/* ==========================================
-   NAVIGATION
-========================================== */
-
 function navigateTo(index) {
-
   if (isAnimating) {
     cancelAnimation();
   }
@@ -232,26 +169,18 @@ function navigateTo(index) {
   if (index === currentSlide) return;
 
   targetSlide = index;
-
   isAnimating = true;
-
   navItems.forEach((item, i) => {
-
     item.classList.toggle(
       "active",
       i === targetSlide
     );
-
   });
 
-  // Establish the current position without animation.
+  // ensure current position before transitioning to target
   track.style.transition = "none";
   track.style.transform = getSlideTransform(currentSlide);
-
-  // Force layout.
   track.offsetHeight;
-
-  // Animate directly to the destination.
   track.style.transition = reducedMotion
     ? "none"
     : `transform ${animationDuration}ms cubic-bezier(.77, 0, .18, 1)`;
@@ -260,11 +189,9 @@ function navigateTo(index) {
 
   const finishAnimation = () => {
     currentSlide = targetSlide;
-
     track.style.transition = "none";
     track.style.transform = getSlideTransform(currentSlide);
 
-    // Preserve the original behaviour of resetting scroll.
     resetSlideScroll();
     updateActiveSlide();
     isAnimating = false;
@@ -282,6 +209,8 @@ function navigateTo(index) {
 }
 
 function goToSlide(direction) {
+  const nav = document.querySelector('#navigation');
+  nav.classList.remove('nav-hidden');
 
   if (isAnimating) cancelAnimation();
 
@@ -303,31 +232,23 @@ function goToSlide(direction) {
   let endIndex;
 
   if (wrapLeft) {
-
     const lastSlide = slideElements[lastIndex];
-
     track.prepend(lastSlide);
-
     restoreSlideOrder = () => {
       track.append(lastSlide);
     };
-
     startIndex = 1;
     endIndex = 0;
-
   } else {
 
     const firstSlide = slideElements[0];
-
     track.append(firstSlide);
-
     restoreSlideOrder = () => {
       track.prepend(firstSlide);
     };
 
     startIndex = lastIndex - 1;
     endIndex = lastIndex;
-
   }
 
   targetSlide = nextIndex;
@@ -337,13 +258,9 @@ function goToSlide(direction) {
     item.classList.toggle("active", i === targetSlide);
   });
 
-  // Establish the temporary starting position.
   track.style.transition = "none";
   track.style.transform = getSlideTransform(startIndex);
-
   track.offsetHeight;
-
-  // Animate exactly one slide.
   track.style.transition = reducedMotion
     ? "none"
     : `transform ${animationDuration}ms cubic-bezier(.77, 0, .18, 1)`;
@@ -397,14 +314,11 @@ document.getElementById("prev").addEventListener(
    NAVIGATION DOTS
 ========================================== */
 
-navItems.forEach((item, index) => {
-
+navItems.forEach(item => {
   item.addEventListener("click", () => {
-
+    const index = Number(item.dataset.index);
     navigateTo(index);
-
   });
-
 });
 
 /* ==========================================
@@ -459,13 +373,6 @@ track.addEventListener("touchend", event => {
   }
 
 }, { passive: true });
-
-/* ==========================================
-   START
-========================================== */
-
-initializeCarousel();
-
 
 /* ==========================================
    SCROLLYTELLING
@@ -808,13 +715,12 @@ async function initializeScrolly(slideElement) {
   const intervals = sequences.map((sequence, index) => {
     const type = sequence.dataset.scrollyType || "scroll";
 
-    const duration = type === "zoom" ? 2
-      : type === "motion" ? 1
-        : Math.max(
-          0.001,
-          ...timingGroups[index].map(timing => timing.endTime),
-          animationGroups[index].smilDuration * 1000
-        ) / 1000;
+    const duration = type === "motion" ? 1
+      : Math.max(
+        0.001,
+        ...timingGroups[index].map(timing => timing.endTime),
+        animationGroups[index].smilDuration * 1000
+      ) / 1000;
 
     const transition =
       sequence.dataset.transitionAfter === "split" &&
@@ -957,28 +863,6 @@ async function initializeScrolly(slideElement) {
         if (group.smilAnimations.length) {
           group.doc.documentElement.setCurrentTime(
             localProgress * interval.duration
-          );
-        }
-      }
-
-      // --------------------------------------
-      // ZOOM
-      // --------------------------------------
-
-      if (interval.type === "zoom") {
-        const world = group.doc.querySelector(".zoom-world");
-
-        if (world) {
-          const zoomProgress = Math.min(1, localProgress);
-          const panProgress = clamp(localProgress - 1);
-
-          const zoom = 1 + 11 * ease(zoomProgress);
-          const x = 500 + 50 * ease(panProgress);
-          const y = 300 - 20 * ease(panProgress);
-
-          world.setAttribute(
-            "transform",
-            `translate(${500 - x * zoom} ${300 - y * zoom}) scale(${zoom})`
           );
         }
       }
@@ -1541,6 +1425,9 @@ async function initializeAixaBackground() {
   };
 }
 
+/* ==========================================
+   MAGNIFYING SVGs
+========================================== */
 
 function initializeSVGMagnifier() {
   let activeObject = null;
@@ -1611,26 +1498,11 @@ function initializeSVGMagnifier() {
   };
 }
 
-const cleanupMagnifier = initializeSVGMagnifier();
-
-
-/* ==========================================
-   INITIALIZE
-========================================== */
-
-targetSlide = currentSlide;
-
-document.querySelectorAll(
-  '.testimonial, .about-strength'
-).forEach(card => {
-  /* NAVIGATION: hide when the active scroller moves */
-
-  const nav = document.querySelector(
-    '[data-navigation], #navigation-carousel, ' +
-    '.navigation-carousel, .nav-carousel, .carousel-navigation, nav'
-  );
+function checkScrollForNav() {
+  const nav = document.querySelector('#navigation');
 
   if (!nav) return;
+  nav.classList.toggle('nav-hidden', false);
 
   function handleScroll(event) {
     const target = event.target;
@@ -1650,10 +1522,23 @@ document.querySelectorAll(
     'nav-hidden',
     (document.scrollingElement?.scrollTop || window.scrollY) > 3
   );
+}
+
+/* ==========================================
+   INITIALIZE
+========================================== */
+
+initializeCarousel();
+checkScrollForNav();
+const cleanupMagnifier = initializeSVGMagnifier();
+targetSlide = currentSlide;
+
+document.querySelectorAll(
+  '.testimonial, .about-strength'
+).forEach(card => {
 
   /* TOGGLES IN ABOUT */
   card.addEventListener('click', () => {
-
     const expanded = card.classList.toggle('is-expanded');
 
     if (card.matches('.about-strength')) {
@@ -1669,6 +1554,4 @@ document.querySelectorAll(
         : 'Read full testimonial ↓';
     }
   });
-
-
 });
