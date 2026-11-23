@@ -1606,3 +1606,215 @@ body {
     margin-top: 14px;
   }
 }
+
+
+/* =====================================
+   REGULAR PAGE: REUSABLE CONTENT LAYOUT
+===================================== */
+
+.regular-page {
+  display: block;
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+  height: auto;
+  padding: 110px 0 65px;
+  overflow: visible;
+  box-sizing: border-box;
+  color: #302e35;
+  text-align: left;
+
+  /* General box sizing */
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Main content width */
+  > h1,
+  > h2,
+  > h3,
+  > p,
+  > img,
+  > header,
+  > section,
+  > div,
+  > aside,
+  > figure {
+    width: 86%;
+    max-width: 1150px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Main title */
+  > .scrolly-title {
+    position: relative;
+    top: auto;
+    left: auto;
+    z-index: auto;
+    width: 86%;
+    max-width: 1150px;
+    margin: 0 auto 35px;
+    font-size: clamp(44px, 6vw, 72px);
+    font-weight: 400;
+    letter-spacing: -2px;
+    line-height: 1.15;
+  }
+
+  /* Images */
+  > img {
+    display: block;
+    height: auto;
+    object-fit: contain;
+    margin-bottom: 35px;
+  }
+
+  /* Typography */
+  p,
+  li {
+    font-size: 16px;
+    line-height: 1.85;
+    color: #555;
+  }
+
+  strong {
+    color: #302e35;
+  }
+
+  h2 {
+    font-size: clamp(32px, 4vw, 48px);
+    font-weight: 400;
+    line-height: 1.2;
+  }
+
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  /* Section spacing */
+  > header,
+  > section {
+    padding: 35px 0 65px;
+    border-top: 1px solid rgba(31, 30, 61, .15);
+
+    h2 {
+      margin-bottom: 25px;
+    }
+  }
+
+  ul {
+    padding-left: 22px;
+    margin: 15px 0 25px;
+  }
+
+  li {
+    padding-left: 5px;
+    margin-bottom: 8px;
+  }
+
+  /* Introductory text */
+  .intro-header {
+    width: 86%;
+    max-width: 850px;
+    margin: 40px auto;
+
+    p {
+      font-size: clamp(20px, 2.5vw, 28px);
+      line-height: 1.6;
+      color: #302e35;
+    }
+  }
+
+  /* Disclaimer */
+  .disclaimer {
+    width: 86%;
+    max-width: 1150px;
+    margin: 35px auto 55px;
+    padding: 20px 25px;
+    border-left: 3px solid #ed1a76;
+    background: rgba(255, 255, 255, .55);
+
+    p {
+      margin-top: 8px;
+      font-size: 14px;
+    }
+  }
+
+  /* Context layout */
+  .context-content {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 60px;
+    align-items: start;
+  }
+
+  .context-copy {
+    width: 100%;
+  }
+
+  .role {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(31, 30, 61, .12);
+  }
+
+  /* Media placeholders */
+  .hero-slot,
+  .team-diagram-slot,
+  .result-detail,
+  .result-library,
+  .result-dashboard {
+    min-width: 0;
+    min-height: 250px;
+    background: rgba(255, 255, 255, .45);
+  }
+
+  .result-gallery {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 25px;
+
+    > div {
+      width: 100%;
+    }
+  }
+
+  /* Responsive layout */
+  @media (max-width: 800px) {
+    padding: 100px 0 45px;
+
+    > h1,
+    > h2,
+    > h3,
+    > p,
+    > img,
+    > header,
+    > section,
+    > div,
+    > aside,
+    > figure,
+    > .scrolly-title {
+      width: 88%;
+    }
+
+    p,
+    li {
+      font-size: 15px;
+    }
+
+    .context-content {
+      grid-template-columns: 1fr;
+      gap: 30px;
+    }
+
+    .result-gallery {
+      grid-template-columns: 1fr;
+    }
+
+    > header,
+    > section {
+      padding: 30px 0 50px;
+    }
+  }
+}

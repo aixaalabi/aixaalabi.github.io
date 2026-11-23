@@ -22,23 +22,16 @@ const slides = [
     template: "template-project-2",
     type: "scrolly"
   },
-  // {
-  //   title: "Project 3",
-  //   bg: "#e5d9d9",
-  //   template: "template-project-3",
-  //   type: "scrolly"
-  // },
   {
-    title: "Misc",
+    title: "Articles",
     bg: "#dcdcdc",
-    template: "template-misc",
+    template: "template-articles",
     type: "standard"
   }
 ];
 
 const track = document.getElementById("track");
 const navItems = document.querySelectorAll(".nav-item");
-
 const animationDuration = 800;
 
 let currentSlide = 2;
@@ -751,9 +744,12 @@ async function initializeScrolly(slideElement) {
   if (stepStarts.some((value, index) =>
     !Number.isFinite(value) ||
     value < 0 ||
+    value >= totalScrollUnits ||
     (index > 0 && value <= stepStarts[index - 1])
   )) {
-    throw new Error("Narrative data-start values must increase.");
+    throw new Error(
+      "Narrative data-start values must increase and remain within the SVG timeline."
+    );
   }
 
   function setStoryHeight() {
@@ -762,14 +758,17 @@ async function initializeScrolly(slideElement) {
     const traditionalHeight =
       traditionalWrapper?.offsetHeight || 0;
 
-    const narrativeEnd = (stepStarts.at(-1) || 0) + 1;
-    const storyEnd = Math.max(totalScrollUnits, narrativeEnd);
+    // The SVG timeline determines the entire story duration.
+    const storyEnd = totalScrollUnits;
 
     story.style.height =
       `${traditionalHeight + (storyEnd + 1) * vh}px`;
 
+    // Each narrative step occupies its corresponding
+    // interval in the SVG timeline.
     steps.forEach((step, index) => {
-      const nextStart = stepStarts[index + 1] ?? storyEnd;
+      const nextStart =
+        stepStarts[index + 1] ?? storyEnd;
 
       step.style.height =
         `${(nextStart - stepStarts[index]) * vh}px`;
@@ -1524,9 +1523,40 @@ function checkScrollForNav() {
   );
 }
 
+async function loadProjectTemplate(name) {
+  const response = await fetch(`./templates/${name}.html`);
+
+  if (!response.ok) {
+    throw new Error(`Failed to load ${name}`);
+  }
+
+  const html = await response.text();
+
+  const container = document.createElement("div");
+  container.innerHTML = html;
+
+  const template = container.querySelector("template");
+
+  if (!template) {
+    throw new Error(`No template found in ${name}`);
+  }
+
+  document.querySelector("#slide-templates").appendChild(template);
+
+  return template;
+}
+
 /* ==========================================
    INITIALIZE
 ========================================== */
+
+await Promise.all([
+  loadProjectTemplate("welcome"),
+  loadProjectTemplate("about"),
+  loadProjectTemplate("p1"),
+  loadProjectTemplate("p2"),
+  loadProjectTemplate("articles")
+]);
 
 initializeCarousel();
 checkScrollForNav();
