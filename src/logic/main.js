@@ -27,7 +27,7 @@ const slides = [
     title: "Gallery",
     bg: "#dcdcdc",
     template: "template-gallery",
-    type: "standard"
+    type: "scrolly"
   }
 ];
 
