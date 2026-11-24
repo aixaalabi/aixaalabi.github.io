@@ -518,12 +518,7 @@ async function initializeScrolly(slideElement) {
     story.insertBefore(traditionalWrapper, visual);
   }
 
-  // Capture the visual's original position in scroll coordinates.
-  // Do this before scrolling, while the visual is not yet sticky.
-  const scrollyStart =
-    visual.getBoundingClientRect().top
-    - slideElement.getBoundingClientRect().top
-    + slideElement.scrollTop;
+  let scrollyStart = null;
 
   sequences.forEach(sequence => {
     sequence.style.visibility = "visible";
@@ -872,6 +867,29 @@ async function initializeScrolly(slideElement) {
 
   const ease = p => p * p * (3 - 2 * p);
 
+  
+  // ==========================================
+  // RENDER STATE CACHE
+  // ==========================================
+
+  // Remember the last rendered progress of each SVG.
+  // Inactive sequences will not be updated unnecessarily.
+  const lastSequenceProgress = new Array(sequences.length).fill(null);
+
+  // Cache visibility and clipping to avoid redundant style writes.
+  const lastVisibility = new Array(sequences.length).fill(null);
+  const lastClipPath = new Array(sequences.length).fill(null);
+
+  // Cache narrative positioning.
+  const lastStepTransform = new Array(steps.length).fill(null);
+  const lastStepVisibility = new Array(steps.length).fill(null);
+
+  // Z-index is static: assign it once, not on every frame.
+  sequences.forEach((sequence, index) => {
+    sequence.style.zIndex = index + 1;
+  });
+
+
   // ==========================================
   // SCROLL UPDATE
   // ==========================================
@@ -885,17 +903,15 @@ async function initializeScrolly(slideElement) {
 
     const progress = getScrollyProgress();
 
-    // Reset visibility and clipping.
-    sequences.forEach((sequence, index) => {
-      sequence.style.clipPath = "inset(0)";
-      sequence.style.zIndex = index + 1;
-      sequence.style.visibility = "hidden";
-    });
+    // Calculate desired visual states without writing to the DOM yet.
+    const visibleSequences = new Array(sequences.length).fill(false);
+    const clipPaths = new Array(sequences.length).fill("inset(0)");
 
     // ==========================================
     // SVG ANIMATIONS
     // ==========================================
 
+    
     intervals.forEach((interval, index) => {
       const group = animationGroups[index];
       const sequence = sequences[index];
@@ -920,8 +936,16 @@ async function initializeScrolly(slideElement) {
       const hideAfter = sequence.dataset.hideAfter === "true";
 
       if (active || (transitioning && !hideAfter)) {
-        sequence.style.visibility = "visible";
+        visibleSequences[index] = true;
       }
+
+      // Only update an SVG when its timeline position changes.
+      const progressChanged =
+        lastSequenceProgress[index] !== localProgress;
+
+      if (!progressChanged) return;
+
+      lastSequenceProgress[index] = localProgress;
 
       // --------------------------------------
       // NORMAL SCROLL
@@ -943,31 +967,6 @@ async function initializeScrolly(slideElement) {
         }
       }
 
-      // --------------------------------------
-      // MOTION
-      // --------------------------------------
-
-      if (interval.type === "motion") {
-        [".circle-1", ".circle-2", ".circle-3"].forEach(
-          (selector, i) => {
-            const circle = group.doc.querySelector(selector);
-            if (!circle) return;
-
-            circle.setAttribute(
-              "cx",
-              motionStart[i].x +
-              (motionEnd[i].x - motionStart[i].x) * localProgress
-            );
-
-            circle.setAttribute(
-              "cy",
-              motionStart[i].y +
-              (motionEnd[i].y - motionStart[i].y) * localProgress
-            );
-          }
-        );
-      }
-
       sequence.style.setProperty(
         "--sequence-progress",
         localProgress
@@ -977,9 +976,6 @@ async function initializeScrolly(slideElement) {
     // ==========================================
     // SPLIT TRANSITIONS
     // ==========================================
-    // The outgoing SVG remains intact.
-    // The incoming SVG is revealed from bottom
-    // to top using the original split effect.
 
     intervals.forEach((interval, index) => {
       if (!interval.transition) return;
@@ -996,54 +992,118 @@ async function initializeScrolly(slideElement) {
         progress >= transitionStart + interval.transition
       ) return;
 
-      const outgoing = sequences[index];
-      const incoming = sequences[index + 1];
+      // Keep the outgoing SVG visible.
+      visibleSequences[index] = true;
 
-      outgoing.style.visibility = "visible";
-      outgoing.style.zIndex = index + 1;
-      outgoing.style.clipPath = "inset(0)";
+      // Reveal the incoming SVG.
+      visibleSequences[index + 1] = true;
 
-      incoming.style.visibility = "visible";
-      incoming.style.zIndex = index + 2;
-
-      incoming.style.clipPath =
+      clipPaths[index + 1] =
         `inset(${(1 - transitionProgress) * 100}% 0 0 0)`;
     });
-    
+
+    // ==========================================
+    // APPLY SVG STYLES
+    // ==========================================
+
+    sequences.forEach((sequence, index) => {
+      const visibility = visibleSequences[index]
+        ? "visible"
+        : "hidden";
+
+      if (lastVisibility[index] !== visibility) {
+        sequence.style.visibility = visibility;
+        lastVisibility[index] = visibility;
+      }
+
+      if (lastClipPath[index] !== clipPaths[index]) {
+        sequence.style.clipPath = clipPaths[index];
+        lastClipPath[index] = clipPaths[index];
+      }
+    });
+
     // ==========================================
     // NARRATIVE POSITIONING
     // ==========================================
 
+    
     steps.forEach((step, index) => {
       const start = stepPositions[index];
       const nextStart = stepPositions[index + 1];
 
-      // The box crosses the viewport centre at its data-at position.
       const distanceFromCenter = (start - progress) * vh;
 
-      step.style.transform =
+      const transform =
         `translateY(${distanceFromCenter}px)`;
+
+      if (lastStepTransform[index] !== transform) {
+        step.style.transform = transform;
+        lastStepTransform[index] = transform;
+      }
 
       const content = step.querySelector(".step-content");
 
       if (content) {
-        content.style.visibility =
+        const visibility =
           nextStart === undefined || progress < nextStart
             ? "visible"
             : "hidden";
+
+        if (lastStepVisibility[index] !== visibility) {
+          content.style.visibility = visibility;
+          lastStepVisibility[index] = visibility;
+        }
       }
     });
+
   }
 
+  
   function getScrollyProgress() {
     const scrollTop = slideElement.scrollTop;
     const vh = slideElement.clientHeight;
 
+    if (!vh) return 0;
+
+    // The timeline has not started yet.
+    if (scrollyStart === null) {
+      const firstSequence = sequences[0];
+
+      const sequenceRect =
+        firstSequence.getBoundingClientRect();
+
+      const viewportRect =
+        slideElement.getBoundingClientRect();
+
+      // Require the ENTIRE first SVG object to be visible.
+      const tolerance = 1;
+
+      const fullyVisible =
+        sequenceRect.width > 0 &&
+        sequenceRect.height > 0 &&
+        sequenceRect.top >= viewportRect.top - tolerance &&
+        sequenceRect.bottom <= viewportRect.bottom + tolerance &&
+        sequenceRect.left >= viewportRect.left - tolerance &&
+        sequenceRect.right <= viewportRect.right + tolerance;
+
+      if (!fullyVisible) {
+        return 0;
+      }
+
+      // Lock the exact scroll position where visibility
+      // was first achieved. This becomes timeline time zero.
+      scrollyStart = scrollTop;
+
+      return 0;
+    }
+
+    // Normal bidirectional scroll-linked animation.
     return Math.max(
       0,
       (scrollTop - scrollyStart) / vh
     );
   }
+
 
   // ==========================================
   // SCROLL SCHEDULING

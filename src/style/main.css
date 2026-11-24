@@ -637,7 +637,7 @@ h3.scrolly-title {
   left: 10%; /* 8.333 for 6 slides */
   right: 10%; /* 8.333 for 6 slides */
   height: 1px;
-  background: #8295AB;
+  background: #B2C9DF;
   z-index: 0;
 }
 
@@ -661,7 +661,7 @@ h3.scrolly-title {
   height: 9px;
   margin: 2px 0 0;
   border-radius: 50%;
-  background: #8295AB;
+  background: #B2C9DF;
 }
 
 #navigation .nav-item.active .dot {
