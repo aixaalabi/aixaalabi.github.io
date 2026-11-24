@@ -611,7 +611,7 @@ h3.scrolly-title {
   width: min(850px, calc(100% - 40px));
   max-width: 850px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)); /* change for 6 slides */
+  grid-template-columns: repeat(5, minmax(0, 1fr)); /* change for 6 slides */
   align-items: start;
   z-index: 20;
   transition: opacity .3s ease, visibility .3s ease;
@@ -623,8 +623,8 @@ h3.scrolly-title {
   content: "";
   position: absolute;
   top: 6px;
-  left: 12.666%; /* 8.333 for 6 slides */
-  right: 12.666%; /* 8.333 for 6 slides */
+  left: 10%; /* 8.333 for 6 slides */
+  right: 10%; /* 8.333 for 6 slides */
   height: 1px;
   background: #8295AB;
   z-index: 0;
