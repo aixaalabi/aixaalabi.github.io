@@ -520,10 +520,6 @@ async function initializeScrolly(slideElement) {
 
   let scrollyStart = null;
 
-  sequences.forEach(sequence => {
-    sequence.style.visibility = "visible";
-    sequence.style.clipPath = "inset(0)";
-  });
   // ==========================================
   // SVG LOADING
   // ==========================================
