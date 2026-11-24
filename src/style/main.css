@@ -750,6 +750,18 @@ h3.scrolly-title {
   padding: 35px 0 65px;
 }
 
+.about-section.gallery {
+  img {
+    width:100%
+  }
+  p {
+    text-align: right;
+    font-size: clamp(20px, 2.5vw, 18px);
+    line-height: 1.2;
+    color: #302e35;
+  }
+}
+
 .about-section+.about-section {
   border-top: 1px solid rgba(31, 30, 61, .15);
 }
@@ -1795,6 +1807,10 @@ h3.scrolly-title {
     }
   }
 
+  .left {
+    text-align: left !important;
+  }
+
   /* Disclaimer */
   .disclaimer {
     display: grid;
@@ -1906,6 +1922,15 @@ h3.scrolly-title {
 }
 
 
+.regular-page.gallery p { 
+  margin-top: 20px !important;
+  margin-bottom: 20px !important;
+}
+
+.regular-page.gallery p:not(.left) { 
+  margin-bottom: 100px !important;
+}
+
 /* ==========================================
    SCROLLY END ACTIONS
 ========================================== */
@@ -1966,3 +1991,19 @@ h3.scrolly-title {
   color: white;
 }
 
+
+/* =====================================
+   GLOBAL IMAGE MAGNIFIER
+===================================== */
+
+.slide img,
+.slide object,
+.slide svg {
+  transform-origin: center center;
+}
+
+.slide img,
+.slide object,
+.slide svg {
+  transition: transform 0.15s ease;
+}

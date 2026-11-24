@@ -1456,29 +1456,57 @@ async function initializeAixaBackground() {
    MAGNIFYING SVGs
 ========================================== */
 
-function initializeSVGMagnifier() {
-  let activeObject = null;
 
-  function findObject(x, y) {
-    return [...document.querySelectorAll("object")].find(object => {
-      const rect = object.getBoundingClientRect();
+/* ==========================================
+   GLOBAL IMAGE MAGNIFIER
+========================================== */
+
+function initializeImageMagnifier() {
+  let activeElement = null;
+
+  const selector = "img, object, svg";
+
+  function isMagnifiable(element) {
+    if (element.matches("object")) {
+      return (
+        element.contentDocument
+          ?.documentElement?.localName === "svg"
+      );
+    }
+
+    // Ignore nested SVG elements. Magnify the SVG root.
+    if (element.matches("svg")) {
+      return !element.parentElement?.closest("svg");
+    }
+
+    return true;
+  }
+
+  function findElement(x, y) {
+    return [...document.querySelectorAll(selector)].find(element => {
+      if (!isMagnifiable(element)) return false;
+
+      const rect = element.getBoundingClientRect();
 
       return (
-        x >= rect.left && x <= rect.right &&
-        y >= rect.top && y <= rect.bottom &&
-        object.contentDocument?.documentElement?.localName === "svg"
+        rect.width > 0 &&
+        rect.height > 0 &&
+        x >= rect.left &&
+        x <= rect.right &&
+        y >= rect.top &&
+        y <= rect.bottom
       );
     }) || null;
   }
 
   function reset() {
-    if (!activeObject) return;
+    if (!activeElement) return;
 
-    activeObject.style.transform = "";
-    activeObject.style.transformOrigin = "";
-    activeObject.style.zIndex = "";
+    activeElement.style.transform = "";
+    activeElement.style.transformOrigin = "";
+    activeElement.style.zIndex = "";
 
-    activeObject = null;
+    activeElement = null;
   }
 
   function update(event) {
@@ -1487,30 +1515,40 @@ function initializeSVGMagnifier() {
       return;
     }
 
-    const object = findObject(event.clientX, event.clientY);
+    const element = findElement(
+      event.clientX,
+      event.clientY
+    );
 
-    if (!object) {
+    if (!element) {
       reset();
       return;
     }
 
-    if (activeObject !== object) {
+    if (activeElement !== element) {
       reset();
-      activeObject = object;
+      activeElement = element;
     }
 
-    const rect = object.getBoundingClientRect();
+    const rect = element.getBoundingClientRect();
 
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    const x = (
+      (event.clientX - rect.left) / rect.width
+    ) * 100;
 
-    object.style.transformOrigin = `${x}% ${y}%`;
-    object.style.transform = "scale(2)";
-    object.style.zIndex = "9999";
+    const y = (
+      (event.clientY - rect.top) / rect.height
+    ) * 100;
+
+    element.style.transformOrigin = `${x}% ${y}%`;
+    element.style.transform = "scale(2)";
+    element.style.zIndex = "9999";
   }
 
   function onKeyUp(event) {
-    if (!event.ctrlKey && !event.metaKey) reset();
+    if (!event.ctrlKey && !event.metaKey) {
+      reset();
+    }
   }
 
   document.addEventListener("pointermove", update);
@@ -1519,11 +1557,13 @@ function initializeSVGMagnifier() {
 
   return () => {
     reset();
+
     document.removeEventListener("pointermove", update);
     document.removeEventListener("keyup", onKeyUp);
     window.removeEventListener("blur", reset);
   };
 }
+
 
 function checkScrollForNav() {
   const nav = document.querySelector('#navigation');
@@ -1609,7 +1649,7 @@ await Promise.all([
 
 initializeCarousel();
 checkScrollForNav();
-const cleanupMagnifier = initializeSVGMagnifier();
+const cleanupMagnifier = initializeImageMagnifier();
 targetSlide = currentSlide;
 
 document.querySelectorAll(
