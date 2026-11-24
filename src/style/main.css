@@ -421,8 +421,12 @@ h3.scrolly-title {
 .scrolly-layer {
   position: absolute;
   inset: 0;
+
   overflow: hidden;
   pointer-events: none;
+
+  contain: paint;
+  isolation: isolate;
 }
 
 .scrolly-sequence {

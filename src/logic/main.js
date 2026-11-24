@@ -454,6 +454,11 @@ async function initializeScrolly(slideElement) {
     sequence.dataset.scrollyType !== "trad"
   );
 
+  // Each SVG gets its own clipping and visibility layer.
+  const sequenceLayers = sequences.map(sequence =>
+    sequence.closest(".scrolly-layer") || sequence
+  );
+
   if (!story || !visual || !sequences.length) {
     console.error("Invalid scrolly structure:", {
       slide: slideElement.dataset.index,
@@ -844,25 +849,6 @@ async function initializeScrolly(slideElement) {
   }
 
   setStoryHeight();
-
-  // ==========================================
-  // ANIMATION CONFIGURATION
-  // ==========================================
-
-  const motionStart = [
-    { x: 100, y: 200 },
-    { x: 100, y: 300 },
-    { x: 100, y: 400 }
-  ];
-
-  const motionEnd = [
-    { x: 800, y: 120 },
-    { x: 650, y: 300 },
-    { x: 800, y: 480 }
-  ];
-
-  const ease = p => p * p * (3 - 2 * p);
-
   
   // ==========================================
   // RENDER STATE CACHE
@@ -881,8 +867,8 @@ async function initializeScrolly(slideElement) {
   const lastStepVisibility = new Array(steps.length).fill(null);
 
   // Z-index is static: assign it once, not on every frame.
-  sequences.forEach((sequence, index) => {
-    sequence.style.zIndex = index + 1;
+  sequenceLayers.forEach((layer, index) => {
+    layer.style.zIndex = index + 1;
   });
 
 
@@ -962,11 +948,6 @@ async function initializeScrolly(slideElement) {
           );
         }
       }
-
-      sequence.style.setProperty(
-        "--sequence-progress",
-        localProgress
-      );
     });
 
     // ==========================================
@@ -997,23 +978,23 @@ async function initializeScrolly(slideElement) {
       clipPaths[index + 1] =
         `inset(${(1 - transitionProgress) * 100}% 0 0 0)`;
     });
-
+    
     // ==========================================
-    // APPLY SVG STYLES
+    // APPLY SVG LAYER STYLES
     // ==========================================
 
-    sequences.forEach((sequence, index) => {
+    sequenceLayers.forEach((layer, index) => {
       const visibility = visibleSequences[index]
         ? "visible"
         : "hidden";
 
       if (lastVisibility[index] !== visibility) {
-        sequence.style.visibility = visibility;
+        layer.style.visibility = visibility;
         lastVisibility[index] = visibility;
       }
 
       if (lastClipPath[index] !== clipPaths[index]) {
-        sequence.style.clipPath = clipPaths[index];
+        layer.style.clipPath = clipPaths[index];
         lastClipPath[index] = clipPaths[index];
       }
     });
