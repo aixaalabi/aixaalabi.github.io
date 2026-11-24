@@ -1136,16 +1136,26 @@ async function initializeScrolly(slideElement) {
   updateScrolly();
 }
 
+
 async function initializeAixaBackground() {
 
-  document.querySelectorAll('.aixa-slide .aixa-tool-name').forEach(name => {
+  // -----------------------------------------
+  // TOOL TOGGLES
+  // -----------------------------------------
+
+  document.querySelectorAll(
+    '.aixa-slide .aixa-tool-name'
+  ).forEach(name => {
     name.addEventListener('click', () => {
       name.closest('.aixa-tool').classList.toggle('closed');
     });
   });
 
-  // Clean up previous instance
-  if (aixaActiveCleanup !== null) {
+  // -----------------------------------------
+  // CLEAN UP PREVIOUS INSTANCE
+  // -----------------------------------------
+
+  if (aixaActiveCleanup) {
     aixaActiveCleanup();
     aixaActiveCleanup = null;
   }
@@ -1155,7 +1165,7 @@ async function initializeAixaBackground() {
   const slide = document.querySelector('.aixa-slide');
   const portrait = slide?.querySelector('.aixa-portrait');
 
-  if (!portrait) return;
+  if (!slide || !portrait) return;
 
   const THREE = await import(
     'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js'
@@ -1163,16 +1173,22 @@ async function initializeAixaBackground() {
 
   if (initId !== aixaInitId || !portrait.isConnected) return;
 
+  // -----------------------------------------
+  // CANVAS: FULL SLIDE, CLIPPED BY PORTRAIT
+  // -----------------------------------------
+
   const canvas = document.createElement('canvas');
+
   portrait.prepend(canvas);
 
   Object.assign(canvas.style, {
     position: 'absolute',
-    inset: '0',
+    left: '0',
+    top: '0',
     width: '100%',
     height: '100%',
     zIndex: '0',
-    pointerEvents: 'auto'
+    pointerEvents: 'none'
   });
 
   const renderer = new THREE.WebGLRenderer({
@@ -1184,9 +1200,79 @@ async function initializeAixaBackground() {
 
   renderer.setPixelRatio(1);
 
-  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const camera = new THREE.OrthographicCamera(
+    -1, 1, 1, -1, 0, 1
+  );
 
   const geometry = new THREE.PlaneGeometry(2, 2);
+
+  // -----------------------------------------
+  // FULL-SLIDE DIMENSIONS
+  // -----------------------------------------
+
+  let screenWidth = 1;
+  let screenHeight = 1;
+
+  let scissorX = 0;
+  let scissorY = 0;
+  let scissorWidth = 1;
+  let scissorHeight = 1;
+
+  function resize() {
+    const slideRect = slide.getBoundingClientRect();
+    const portraitRect = portrait.getBoundingClientRect();
+
+    screenWidth = Math.max(1, Math.round(slideRect.width));
+    screenHeight = Math.max(1, Math.round(slideRect.height));
+
+    // Canvas fills the entire slide, but remains
+    // physically inside the circular portrait wrapper.
+
+    canvas.style.left =
+      `${slideRect.left - portraitRect.left}px`;
+
+    canvas.style.top =
+      `${slideRect.top - portraitRect.top}px`;
+
+    canvas.style.width = `${screenWidth}px`;
+    canvas.style.height = `${screenHeight}px`;
+
+    renderer.setSize(screenWidth, screenHeight, false);
+
+    // Correct fluid distances for screen aspect ratio.
+    simUniforms.uResolution.value.set(
+      screenWidth,
+      screenHeight
+    );
+
+    // WebGL scissor rectangle: only draw the
+    // visible portrait region during the display pass.
+
+    const x = portraitRect.left - slideRect.left;
+    const y = portraitRect.top - slideRect.top;
+
+    const left = Math.max(0, x);
+    const top = Math.max(0, y);
+
+    const right = Math.min(
+      screenWidth,
+      x + portraitRect.width
+    );
+
+    const bottom = Math.min(
+      screenHeight,
+      y + portraitRect.height
+    );
+
+    scissorX = left;
+    scissorY = screenHeight - bottom;
+    scissorWidth = Math.max(0, right - left);
+    scissorHeight = Math.max(0, bottom - top);
+  }
+
+  // -----------------------------------------
+  // VELOCITY SIMULATION
+  // -----------------------------------------
 
   const simSize = 256;
 
@@ -1200,31 +1286,32 @@ async function initializeAixaBackground() {
   };
 
   let read = new THREE.WebGLRenderTarget(
-    simSize, simSize, targetOptions
+    simSize,
+    simSize,
+    targetOptions
   );
 
   let write = new THREE.WebGLRenderTarget(
-    simSize, simSize, targetOptions
+    simSize,
+    simSize,
+    targetOptions
   );
 
-  const clearTarget = (target) => {
-    renderer.setRenderTarget(target);
-    renderer.clear();
-  };
+  renderer.setRenderTarget(read);
+  renderer.clear();
 
-  clearTarget(read);
-  clearTarget(write);
+  renderer.setRenderTarget(write);
+  renderer.clear();
+
   renderer.setRenderTarget(null);
-
-  // -------------------------------
-  // VELOCITY SIMULATION
-  // -------------------------------
 
   const simUniforms = {
     uVelocity: { value: read.texture },
-    uMouse: { value: new THREE.Vector2(-10, -10) },
+    uMouse: { value: new THREE.Vector2(0.5, 0.5) },
     uForce: { value: new THREE.Vector2(0, 0) },
-    uResolution: { value: new THREE.Vector2(simSize, simSize) },
+    uResolution: {
+      value: new THREE.Vector2(screenWidth, screenHeight)
+    },
     uDelta: { value: 0.016 }
   };
 
@@ -1253,14 +1340,12 @@ async function initializeAixaBackground() {
 
         vec2 uv = vUv;
 
-        // Read the previous velocity field
         vec2 oldVelocity = texture2D(
-          uVelocity,
-          uv
+          uVelocity, uv
         ).xy;
 
-        // Advect velocity using the previous velocity
-        vec2 backtrace = uv - oldVelocity * uDelta * 0.8;
+        vec2 backtrace =
+          uv - oldVelocity * uDelta * 0.8;
 
         vec2 velocity = texture2D(
           uVelocity,
@@ -1270,7 +1355,7 @@ async function initializeAixaBackground() {
         // Dissipation
         velocity *= 0.992;
 
-        // Aspect-correct mouse coordinates
+        // Correct distances for the full-screen aspect ratio.
         vec2 aspect = vec2(
           uResolution.x / uResolution.y,
           1.0
@@ -1280,16 +1365,18 @@ async function initializeAixaBackground() {
         vec2 mouse = uMouse * aspect;
 
         vec2 relative = pos - mouse;
-
         float dist = length(relative);
 
-        // Localized cursor force
-        float influence = exp(-dist * dist * 180.0);
+        float influence = exp(
+          -dist * dist * 180.0
+        );
 
         velocity += uForce * influence * 0.08;
 
-        // Vortex-like displacement around cursor
-        vec2 tangent = vec2(-relative.y, relative.x);
+        vec2 tangent = vec2(
+          -relative.y,
+          relative.x
+        );
 
         velocity += tangent *
           influence *
@@ -1307,9 +1394,9 @@ async function initializeAixaBackground() {
     new THREE.Mesh(geometry, simMaterial)
   );
 
-  // -------------------------------
+  // -----------------------------------------
   // COLOR DISPLAY
-  // -------------------------------
+  // -----------------------------------------
 
   const displayUniforms = {
     uVelocity: { value: read.texture },
@@ -1328,7 +1415,7 @@ async function initializeAixaBackground() {
       }
     `,
 
-    fragmentShader: `            
+    fragmentShader: `
       uniform sampler2D uVelocity;
       uniform float uTime;
 
@@ -1336,65 +1423,61 @@ async function initializeAixaBackground() {
 
       void main() {
 
-          vec2 velocity = texture2D(uVelocity, vUv).xy;
+        vec2 velocity = texture2D(
+          uVelocity, vUv
+        ).xy;
 
-          // Fluid displacement
-          vec2 uv = vUv - velocity * 1.5;
+        vec2 uv = vUv - velocity * 1.5;
 
-          float t = uTime * 0.22;
+        float t = uTime * 0.22;
 
-          // Continuous diagonal movement
-          uv += vec2(t * 0.12, t * 0.12);
+        uv += vec2(t * 0.12, t * 0.12);
 
-          // Triangular grid
-          float scale = 7.0;
+        float scale = 7.0;
 
-          vec2 grid = uv * scale;
-          vec2 cell = fract(grid);
-          vec2 id = floor(grid);
+        vec2 grid = uv * scale;
+        vec2 cell = fract(grid);
+        vec2 id = floor(grid);
 
-          // Triangle orientation
-          float triangle = step(cell.y, cell.x);
+        float triangle = step(cell.y, cell.x);
 
-          // Animated color variation
-          float wave = sin(
-              id.x * 1.7 +
-              id.y * 2.3 +
-              t
-          );
+        float wave = sin(
+          id.x * 1.7 +
+          id.y * 2.3 +
+          t
+        );
 
-          float wave2 = cos(
-              id.x * 1.3 -
-              id.y * 1.8 -
-              t
-          );
+        float wave2 = cos(
+          id.x * 1.3 -
+          id.y * 1.8 -
+          t
+        );
 
-          vec3 lavender = vec3(0.72, 0.59, 0.87);
-          vec3 blue = vec3(0.57, 0.77, 0.88);
-          vec3 pink = vec3(0.94, 0.65, 0.76);
-          vec3 purple = vec3(0.55, 0.43, 0.72);
+        vec3 lavender = vec3(0.72, 0.59, 0.87);
+        vec3 blue = vec3(0.57, 0.77, 0.88);
+        vec3 pink = vec3(0.94, 0.65, 0.76);
+        vec3 purple = vec3(0.55, 0.43, 0.72);
 
-          vec3 color = mix(
-              lavender,
-              blue,
-              smoothstep(-0.4, 0.5, wave)
-          );
+        vec3 color = mix(
+          lavender,
+          blue,
+          smoothstep(-0.4, 0.5, wave)
+        );
 
-          color = mix(
-              color,
-              pink,
-              smoothstep(-0.2, 0.7, wave2) * 0.7
-          );
+        color = mix(
+          color,
+          pink,
+          smoothstep(-0.2, 0.7, wave2) * 0.7
+        );
 
-          color = mix(
-              color,
-              purple,
-              triangle * 0.25
-          );
+        color = mix(
+          color,
+          purple,
+          triangle * 0.25
+        );
 
-          gl_FragColor = vec4(color, 1.0);
+        gl_FragColor = vec4(color, 1.0);
       }
-
     `
   });
 
@@ -1404,56 +1487,99 @@ async function initializeAixaBackground() {
     new THREE.Mesh(geometry, displayMaterial)
   );
 
-  // -------------------------------
-  // POINTER
-  // -------------------------------
+  // -----------------------------------------
+  // POINTER: ENTIRE SLIDE
+  // -----------------------------------------
 
   const currentMouse = new THREE.Vector2(0.5, 0.5);
   const targetMouse = new THREE.Vector2(0.5, 0.5);
   const previousMouse = new THREE.Vector2(0.5, 0.5);
 
-  function onPointerMove(event) {
-    event.preventDefault();
-    const rect = portrait.getBoundingClientRect();
+  let pointerInside = false;
 
+  function onPointerMove(event) {
+
+    if (currentSlide !== 1) {
+      pointerInside = false;
+      pointerInsideCanvas = false;
+      return;
+    }
+
+    const slideRect = slide.getBoundingClientRect();
+
+    const x = event.clientX - slideRect.left;
+    const y = event.clientY - slideRect.top;
+
+    pointerInside =
+      x >= 0 &&
+      x <= slideRect.width &&
+      y >= 0 &&
+      y <= slideRect.height;
+
+    if (!pointerInside) {
+      pointerInsideCanvas = false;
+      return;
+    }
+
+    // Coordinates across the entire Welcome slide.
     targetMouse.set(
-      (event.clientX - rect.left) / rect.width,
-      1 - (event.clientY - rect.top) / rect.height
+      x / slideRect.width,
+      1 - y / slideRect.height
     );
 
-    pointerInsideCanvas = true;
+    // Preserve the existing touch-swipe protection:
+    // only suppress navigation gestures originating
+    // inside the portrait.
+    const portraitRect = portrait.getBoundingClientRect();
+
+    pointerInsideCanvas =
+      event.clientX >= portraitRect.left &&
+      event.clientX <= portraitRect.right &&
+      event.clientY >= portraitRect.top &&
+      event.clientY <= portraitRect.bottom;
   }
 
   function onPointerLeave() {
-    setTimeout(() => {
-      pointerInsideCanvas = false;
-    }, 100)
+    pointerInside = false;
+    pointerInsideCanvas = false;
   }
 
-  portrait.addEventListener('pointermove', onPointerMove);
-  portrait.addEventListener('pointerleave', onPointerLeave);
+  window.addEventListener(
+    'pointermove',
+    onPointerMove,
+    { passive: true }
+  );
 
-  // -------------------------------
-  // RESIZE
-  // -------------------------------
+  window.addEventListener(
+    'pointerleave',
+    onPointerLeave
+  );
 
-  function resize() {
-    const width = portrait.clientWidth;
-    const height = portrait.clientHeight;
+  window.addEventListener(
+    'blur',
+    onPointerLeave
+  );
 
-    if (!width || !height) return;
-
-    renderer.setSize(width, height, false);
-  }
+  // -----------------------------------------
+  // RESIZE AND POSITION
+  // -----------------------------------------
 
   const resizeObserver = new ResizeObserver(resize);
+
+  resizeObserver.observe(slide);
   resizeObserver.observe(portrait);
+
+  slide.addEventListener('scroll', resize, {
+    passive: true
+  });
+
+  window.addEventListener('resize', resize);
 
   resize();
 
-  // -------------------------------
+  // -----------------------------------------
   // ANIMATION
-  // -------------------------------
+  // -----------------------------------------
 
   let animationFrame;
   let lastTime = 0;
@@ -1479,33 +1605,60 @@ async function initializeAixaBackground() {
     previousMouse.copy(currentMouse);
 
     simUniforms.uMouse.value.copy(currentMouse);
-    simUniforms.uForce.value.set(movement.x * 35, movement.y * 35);
+
+    simUniforms.uForce.value.set(
+      pointerInside && currentSlide === 1
+        ? movement.x * 35 : 0,
+
+      pointerInside && currentSlide === 1
+        ? movement.y * 35 : 0
+    );
+
     simUniforms.uDelta.value = dt;
 
-    // Simulation pass
+    // ---------------------------------------
+    // PASS 1: FULL-SCREEN FLUID SIMULATION
+    // ---------------------------------------
+
+    renderer.setScissorTest(false);
+
     simUniforms.uVelocity.value = read.texture;
 
     renderer.setRenderTarget(write);
     renderer.render(simScene, camera);
 
-    // Swap buffers
     const temp = read;
     read = write;
     write = temp;
 
-    // Display pass
+    // ---------------------------------------
+    // PASS 2: DISPLAY ONLY INSIDE PORTRAIT
+    // ---------------------------------------
+
     displayUniforms.uVelocity.value = read.texture;
     displayUniforms.uTime.value = time * 0.001;
 
     renderer.setRenderTarget(null);
+
+    renderer.setScissorTest(true);
+
+    renderer.setScissor(
+      scissorX,
+      scissorY,
+      scissorWidth,
+      scissorHeight
+    );
+
     renderer.render(displayScene, camera);
+
+    renderer.setScissorTest(false);
   }
 
   animate(0);
 
-  // -------------------------------
+  // -----------------------------------------
   // CLEANUP
-  // -------------------------------
+  // -----------------------------------------
 
   aixaActiveCleanup = () => {
 
@@ -1513,10 +1666,29 @@ async function initializeAixaBackground() {
 
     cancelAnimationFrame(animationFrame);
 
-    portrait.removeEventListener('pointermove', onPointerMove);
-    portrait.removeEventListener('pointerleave', onPointerLeave);
+    window.removeEventListener(
+      'pointermove',
+      onPointerMove
+    );
+
+    window.removeEventListener(
+      'pointerleave',
+      onPointerLeave
+    );
+
+    window.removeEventListener(
+      'blur',
+      onPointerLeave
+    );
+
+    window.removeEventListener('resize', resize);
+
+    slide.removeEventListener('scroll', resize);
 
     resizeObserver.disconnect();
+
+    pointerInside = false;
+    pointerInsideCanvas = false;
 
     read.dispose();
     write.dispose();
@@ -1530,6 +1702,7 @@ async function initializeAixaBackground() {
     canvas.remove();
   };
 }
+
 
 /* ==========================================
    MAGNIFYING SVGs

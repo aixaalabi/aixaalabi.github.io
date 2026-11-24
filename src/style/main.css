@@ -244,7 +244,7 @@ body {
 
 .aixa-slide .aixa-portrait canvas {
   touch-action: none;
-  pointer-events: auto;
+  pointer-events: none;
   -webkit-user-select: none;
   user-select: none;
 }
