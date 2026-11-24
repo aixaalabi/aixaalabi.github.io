@@ -51,6 +51,41 @@ const reducedMotion = window.matchMedia(
 // Store all slide elements permanently.
 const slideElements = [];
 
+/* ==========================================
+   SLIDE-BASED IMAGE LOADING
+========================================== */
+
+
+function loadSlideImages(slide) {
+  // Load responsive picture sources.
+  slide.querySelectorAll("source[data-srcset]").forEach(source => {
+    source.srcset = source.dataset.srcset;
+    source.removeAttribute("data-srcset");
+  });
+
+  // Load ordinary images.
+  slide.querySelectorAll("img[data-src], img[data-srcset]").forEach(img => {
+    img.loading = "eager";
+
+    if (img.dataset.srcset) {
+      img.srcset = img.dataset.srcset;
+      img.removeAttribute("data-srcset");
+    }
+
+    if (img.dataset.src) {
+      img.src = img.dataset.src;
+      img.removeAttribute("data-src");
+    }
+  });
+
+  // Load external SVG objects.
+  slide.querySelectorAll("object[data-src]").forEach(object => {
+    object.data = object.dataset.src;
+    object.removeAttribute("data-src");
+  });
+}
+
+
 function createSlides() {
   track.replaceChildren();
   track.style.setProperty("--slide-count", slides.length);
@@ -89,10 +124,6 @@ function initializeAllSlides() {
     if (slides[index].title === "Welcome") {
       initializeAixaBackground();
     }
-
-    if (slides[index].type === "scrolly") {
-      initializeScrolly(element);
-    }
   });
 }
 
@@ -103,12 +134,27 @@ function getSlideTransform(index) {
 function updateActiveSlide() {
   slideElements.forEach((element, index) => {
     const active = index === currentSlide;
+
     element.inert = !active;
+
     element.setAttribute(
       "aria-hidden",
       String(!active)
     );
 
+    // Load images only when their slide becomes active.
+    if (active) {
+      loadSlideImages(element);
+
+      // Initialize scrolly sections only once.
+      if (
+        slides[index].type === "scrolly" &&
+        !element.dataset.scrollyInitialized
+      ) {
+        element.dataset.scrollyInitialized = "true";
+        initializeScrolly(element);
+      }
+    }
   });
 
   navItems.forEach(item => {
@@ -120,7 +166,6 @@ function updateActiveSlide() {
     );
   });
 }
-
 function resetSlideScroll() {
   slideElements.forEach(element => {
     element.scrollTop = 0;
