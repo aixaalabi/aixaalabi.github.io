@@ -1412,8 +1412,6 @@ async function initializeAixaBackground() {
   const targetMouse = new THREE.Vector2(0.5, 0.5);
   const previousMouse = new THREE.Vector2(0.5, 0.5);
 
-  let pointerInside = false;
-
   function onPointerMove(event) {
     event.preventDefault();
     const rect = portrait.getBoundingClientRect();
@@ -1423,12 +1421,10 @@ async function initializeAixaBackground() {
       1 - (event.clientY - rect.top) / rect.height
     );
 
-    pointerInside = true;
     pointerInsideCanvas = true;
   }
 
   function onPointerLeave() {
-    pointerInside = false;
     setTimeout(() => {
       pointerInsideCanvas = false;
     }, 100)
@@ -1483,12 +1479,7 @@ async function initializeAixaBackground() {
     previousMouse.copy(currentMouse);
 
     simUniforms.uMouse.value.copy(currentMouse);
-
-    simUniforms.uForce.value.set(
-      pointerInside ? movement.x * 35 : 0,
-      pointerInside ? movement.y * 35 : 0
-    );
-
+    simUniforms.uForce.value.set(movement.x * 35, movement.y * 35);
     simUniforms.uDelta.value = dt;
 
     // Simulation pass
