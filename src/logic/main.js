@@ -413,6 +413,18 @@ track.addEventListener("touchend", event => {
 
 }, { passive: true });
 
+
+function disableSvgFilters(object) {
+  const doc = object.contentDocument;
+
+  if (!doc) return;
+
+  doc.querySelectorAll("filter").forEach(filter => {
+    filter.style.display = "none";
+  });
+}
+
+
 /* ==========================================
    SCROLLYTELLING
 ========================================== */
@@ -460,13 +472,6 @@ async function initializeScrolly(slideElement) {
   );
 
   if (!story || !visual || !sequences.length) {
-    console.error("Invalid scrolly structure:", {
-      slide: slideElement.dataset.index,
-      story: !!story,
-      visual: !!visual,
-      sequences: sequences.length
-    });
-
     loader?.classList.add("hidden");
     slideElement.classList.remove("is-loading");
     return;
@@ -718,11 +723,12 @@ async function initializeScrolly(slideElement) {
     );
 
     if (destroyed || !slideElement.isConnected) return;
-
     animationGroups = await Promise.all(
       documents.map((doc, index) => prepareSVG(doc, index))
     );
 
+    animationGroups.forEach((object) => { disableSvgFilters(object)});
+    
     if (destroyed || !slideElement.isConnected) return;
 
   } catch (error) {

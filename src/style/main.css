@@ -26,7 +26,7 @@ body {
 
 .top-disclaim {
   position: absolute;
-  top: 110px !important;
+  top: 110px;
 }
 
 .about-section-label {
@@ -1307,6 +1307,11 @@ h3.scrolly-title {
 @media (max-width: 800px) {
 
   /* Welcome */
+
+  p.top-disclaim { 
+    position: relative;
+    top: -20px;
+  }
 
   .aixa-slide {
     height: 100%;
