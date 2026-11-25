@@ -65,7 +65,7 @@ function loadSlideImages(slide) {
 
   // Load ordinary images.
   slide.querySelectorAll("img[data-src], img[data-srcset]").forEach(img => {
-    img.loading = "eager";
+    img.loading = "lazy";
 
     if (img.dataset.srcset) {
       img.srcset = img.dataset.srcset;

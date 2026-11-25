@@ -964,8 +964,13 @@ h3.scrolly-title {
 
 @media (hover: hover) and (pointer: fine) {
 
-  .top-disclaim {
+  .top-disclaim.mobile {
     display: none;
+  }
+
+  .top-disclaim.desktop {
+    position: absolute;
+    top:110px
   }
 
   .testimonial:hover {
@@ -1059,6 +1064,12 @@ h3.scrolly-title {
 (pointer: coarse) {
   .gallery-overlay {
     opacity: 1 !important;
+  }
+  .top-disclaim.desktop {
+    display: none;
+  }
+  .top-disclaim.mobile {
+    margin-bottom: 40px;
   }
 }
 
@@ -1298,6 +1309,7 @@ h3.scrolly-title {
   p.top-disclaim { 
     position: relative;
     top: -10px;
+    text-align: center;
   }
 
   .aixa-slide {
