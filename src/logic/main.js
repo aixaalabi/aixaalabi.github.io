@@ -55,7 +55,6 @@ const slideElements = [];
    SLIDE-BASED IMAGE LOADING
 ========================================== */
 
-
 function loadSlideImages(slide) {
   // Load responsive picture sources.
   slide.querySelectorAll("source[data-srcset]").forEach(source => {
@@ -1671,13 +1670,9 @@ async function initializeAixaBackground() {
 
 
 /* ==========================================
-   MAGNIFYING SVGs
-========================================== */
-
-
-/* ==========================================
    GLOBAL IMAGE MAGNIFIER
 ========================================== */
+
 
 function initializeImageMagnifier() {
   let activeElement = null;
@@ -1692,29 +1687,134 @@ function initializeImageMagnifier() {
       );
     }
 
-    // Ignore nested SVG elements. Magnify the SVG root.
     if (element.matches("svg")) {
       return !element.parentElement?.closest("svg");
     }
 
     return true;
   }
-
+  
   function findElement(x, y) {
-    return [...document.querySelectorAll(selector)].find(element => {
-      if (!isMagnifiable(element)) return false;
+    // First handle the external SVG objects used by scrollytelling.
+    const sequences = [
+      ...document.querySelectorAll(".scrolly-sequence")
+    ];
 
-      const rect = element.getBoundingClientRect();
+    const candidates = [];
 
-      return (
-        rect.width > 0 &&
-        rect.height > 0 &&
-        x >= rect.left &&
-        x <= rect.right &&
-        y >= rect.top &&
-        y <= rect.bottom
+    sequences.forEach((object, index) => {
+      if (!isMagnifiable(object)) return;
+
+      const layer =
+        object.closest(".scrolly-layer") || object;
+
+      // Ignore hidden sequences and hidden ancestors.
+      let ancestor = layer;
+
+      while (ancestor && ancestor !== document.documentElement) {
+        const style = getComputedStyle(ancestor);
+
+        if (
+          style.visibility === "hidden" ||
+          style.display === "none"
+        ) {
+          return;
+        }
+
+        ancestor = ancestor.parentElement;
+      }
+
+      const rect = layer.getBoundingClientRect();
+
+      if (!rect.width || !rect.height) return;
+
+      // Respect the clipping applied by the scrollytelling.
+      const clipPath = getComputedStyle(layer).clipPath;
+
+      let clipTop = rect.top;
+      let clipRight = rect.right;
+      let clipBottom = rect.bottom;
+      let clipLeft = rect.left;
+
+      if (clipPath && clipPath.startsWith("inset(")) {
+        const values = clipPath
+          .slice(6, -1)
+          .split(/\s+/);
+
+        const resolve = (value, dimension) => {
+          if (!value) return 0;
+
+          return value.endsWith("%")
+            ? parseFloat(value) / 100 * dimension
+            : parseFloat(value);
+        };
+
+        const top = resolve(values[0], rect.height);
+        const right = resolve(
+          values[1] || values[0],
+          rect.width
+        );
+        const bottom = resolve(
+          values[2] || values[0],
+          rect.height
+        );
+        const left = resolve(
+          values[3] || values[1] || values[0],
+          rect.width
+        );
+
+        clipTop += top;
+        clipRight -= right;
+        clipBottom -= bottom;
+        clipLeft += left;
+      }
+
+      if (
+        x < clipLeft ||
+        x > clipRight ||
+        y < clipTop ||
+        y > clipBottom
+      ) {
+        return;
+      }
+
+      const style = getComputedStyle(layer);
+
+      candidates.push({
+        element: object,
+        zIndex: Number.parseInt(style.zIndex, 10) || 0,
+        index
+      });
+    });
+
+    // The highest visible sequence layer wins.
+    if (candidates.length) {
+      candidates.sort((a, b) =>
+        a.zIndex - b.zIndex || a.index - b.index
       );
-    }) || null;
+
+      return candidates[candidates.length - 1].element;
+    }
+
+    // Preserve magnification for ordinary images and SVGs.
+    return [...document.querySelectorAll("img, svg")]
+      .find(element => {
+        if (!isMagnifiable(element)) return false;
+
+        // Don't accidentally select SVGs inside an object.
+        if (element.ownerDocument !== document) return false;
+
+        const rect = element.getBoundingClientRect();
+
+        return (
+          rect.width > 0 &&
+          rect.height > 0 &&
+          x >= rect.left &&
+          x <= rect.right &&
+          y >= rect.top &&
+          y <= rect.bottom
+        );
+      }) || null;
   }
 
   function reset() {
@@ -1733,34 +1833,42 @@ function initializeImageMagnifier() {
       return;
     }
 
-    const element = findElement(
-      event.clientX,
-      event.clientY
+    // Select a target only once, when magnification starts.
+    // Keep that target locked until the modifier key is released.
+    if (!activeElement) {
+      activeElement = findElement(
+        event.clientX,
+        event.clientY
+      );
+    }
+
+    // Do not deactivate when the pointer leaves the source.
+    if (!activeElement) return;
+
+    const rect = activeElement.getBoundingClientRect();
+
+    if (!rect.width || !rect.height) return;
+
+    // Clamp the pointer to the source boundaries.
+    const x = Math.max(
+      0,
+      Math.min(
+        100,
+        ((event.clientX - rect.left) / rect.width) * 100
+      )
     );
 
-    if (!element) {
-      reset();
-      return;
-    }
+    const y = Math.max(
+      0,
+      Math.min(
+        100,
+        ((event.clientY - rect.top) / rect.height) * 100
+      )
+    );
 
-    if (activeElement !== element) {
-      reset();
-      activeElement = element;
-    }
-
-    const rect = element.getBoundingClientRect();
-
-    const x = (
-      (event.clientX - rect.left) / rect.width
-    ) * 100;
-
-    const y = (
-      (event.clientY - rect.top) / rect.height
-    ) * 100;
-
-    element.style.transformOrigin = `${x}% ${y}%`;
-    element.style.transform = "scale(2)";
-    element.style.zIndex = "9999";
+    activeElement.style.transformOrigin = `${x}% ${y}%`;
+    activeElement.style.transform = "scale(2)";
+    activeElement.style.zIndex = "9999";
   }
 
   function onKeyUp(event) {
@@ -1781,7 +1889,6 @@ function initializeImageMagnifier() {
     window.removeEventListener("blur", reset);
   };
 }
-
 
 function checkScrollForNav() {
   const nav = document.querySelector('#navigation');
