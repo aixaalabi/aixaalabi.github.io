@@ -84,7 +84,6 @@ function loadSlideImages(slide) {
   });
 }
 
-
 function createSlides() {
   track.replaceChildren();
   track.style.setProperty("--slide-count", slides.length);
@@ -165,6 +164,7 @@ function updateActiveSlide() {
     );
   });
 }
+
 function resetSlideScroll() {
   slideElements.forEach(element => {
     element.scrollTop = 0;
@@ -388,7 +388,6 @@ function disableSvgFilters(object) {
     filter.style.display = "none";
   });
 }
-
 
 /* ==========================================
    SCROLLYTELLING
@@ -1101,7 +1100,6 @@ async function initializeScrolly(slideElement) {
   updateScrolly();
 }
 
-
 async function initializeAixaBackground() {
 
   // -----------------------------------------
@@ -1668,16 +1666,12 @@ async function initializeAixaBackground() {
   };
 }
 
-
 /* ==========================================
    GLOBAL IMAGE MAGNIFIER
 ========================================== */
 
-
 function initializeImageMagnifier() {
   let activeElement = null;
-
-  const selector = "img, object, svg";
 
   function isMagnifiable(element) {
     if (element.matches("object")) {
