@@ -377,42 +377,8 @@ document.addEventListener("keydown", event => {
 });
 
 /* ==========================================
-   TOUCH SWIPE NAVIGATION
+   SVG IMPROVEMENTS
 ========================================== */
-
-let touchStartX = 0;
-let touchStartY = 0;
-
-track.addEventListener("touchstart", event => {
-
-  touchStartX = event.changedTouches[0].screenX;
-  touchStartY = event.changedTouches[0].screenY;
-
-}, { passive: true });
-
-track.addEventListener("touchend", event => {
-
-  if (pointerInsideCanvas === true) {
-    return;
-  }
-
-  const touchEndX = event.changedTouches[0].screenX;
-  const touchEndY = event.changedTouches[0].screenY;
-
-  const dx = touchStartX - touchEndX;
-  const dy = touchStartY - touchEndY;
-
-  if (
-    Math.abs(dx) > 50 &&
-    Math.abs(dx) > Math.abs(dy)
-  ) {
-
-    goToSlide(dx > 0 ? 1 : -1);
-
-  }
-
-}, { passive: true });
-
 
 function disableSvgFilters(object) {
   const doc = object.contentDocument;

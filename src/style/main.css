@@ -24,11 +24,6 @@ body {
   color: #8295AB;
 }
 
-.top-disclaim {
-  position: absolute;
-  top: 110px;
-}
-
 .about-section-label {
   margin-bottom: 30px;
 }
@@ -981,6 +976,10 @@ h3.scrolly-title {
 
 @media (hover: hover) and (pointer: fine) {
 
+  .top-disclaim {
+    display: none;
+  }
+
   .testimonial:hover {
     background: #fff;
     box-shadow: 0 5px 20px rgba(31, 30, 61, .07);
@@ -1310,7 +1309,7 @@ h3.scrolly-title {
 
   p.top-disclaim { 
     position: relative;
-    top: -20px;
+    top: -10px;
   }
 
   .aixa-slide {
