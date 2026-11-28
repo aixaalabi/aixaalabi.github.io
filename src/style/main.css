@@ -1464,112 +1464,6 @@ h3.scrolly-title {
   .testimonial {
     padding: 20px;
   }
-
-  /* Gallery */
-
-  .gallery-slide {
-    box-sizing: border-box;
-    width: 100%;
-    height: 100%;
-    max-height: 100dvh;
-    min-height: 0;
-
-    display: flex;
-    flex-direction: column;
-
-    padding: 100px 7% 35px;
-    gap: 20px;
-
-    overflow-x: hidden;
-    overflow-y: auto;
-    scrollbar-width: none;
-
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: contain;
-  }
-
-  .gallery-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-    gap: 20px;
-
-    width: 100%;
-    flex: 0 0 auto;
-  }
-
-  .gallery-card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-
-    width: 100%;
-    min-width: 0;
-    min-height: 260px;
-
-    overflow: hidden;
-    border-radius: 4px;
-    isolation: isolate;
-  }
-
-  .gallery-image {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-
-    width: 100%;
-    height: 100%;
-
-    background-position: center;
-    background-size: cover;
-  }
-
-  .gallery-overlay {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    justify-content: flex-end;
-
-    min-width: 0;
-    padding: 22px;
-
-    opacity: 1;
-    background: linear-gradient(to top,
-        rgba(31, 30, 61, .95),
-        rgba(31, 30, 61, .65) 65%,
-        rgba(31, 30, 61, .1));
-  }
-
-  /* Hide long descriptions on mobile */
-
-  .gallery-overlay p {
-    display: none;
-  }
-
-  /* Mobile title hierarchy */
-
-  .gallery-overlay h2 {
-    margin: 8px 0;
-    font-weight: 500;
-    line-height: 1.15;
-  }
-
-  .gallery-overlay h3 {
-    margin: 0 0 8px;
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 1.5;
-  }
-
-  .gallery-overlay h3 em {
-    font-weight: 400;
-  }
-
-  .gallery-link {
-    margin-top: 8px;
-  }
-
-
 }
 
 /* =====================================
@@ -1925,7 +1819,6 @@ h3.scrolly-title {
     >h2,
     >h3,
     >p,
-    >img,
     >header,
     >section,
     >div,
@@ -1956,19 +1849,17 @@ h3.scrolly-title {
       text-align: center;
     }
 
-    .gallery {
-      .container {
-        width: 90%;
+    .intro-header {
+      width: 100%;
+    }
+    
+    .container {
+      width: 90%;
 
-        img {
-          width: 100%
-        }
+      img {
+        width: 100%
       }
-
-      .intro-header {
-        width: 100%;
-      }
-
+    
       p {
         margin-top: 20px;
         margin-bottom: 20px;
@@ -1980,8 +1871,6 @@ h3.scrolly-title {
     }
   }
 }
-
-
 
 /* ==========================================
    SCROLLY END ACTIONS
