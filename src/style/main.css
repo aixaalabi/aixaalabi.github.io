@@ -1245,11 +1245,6 @@ h3.scrolly-title {
 ===================================== */
 
 @media (max-width: 900px) {
-
-  .aixa-slide {
-    padding: 110px 5% 35px;
-  }
-
   .aixa-slide .aixa-profile {
     gap: 25px;
   }
@@ -1315,14 +1310,14 @@ h3.scrolly-title {
     position: relative;
     text-align: center;
     top: auto !important;
-    margin-top: 0;
-    padding-top: 100px;
+    margin-top: 100px;
   }
 
   .aixa-slide {
     height: 100%;
     min-height: 100vh;
-    padding: 105px 7% 35px;
+    padding:0;
+    margin: 10px 7% 35px;
     justify-content: flex-start;
     overflow-y: auto;
     scrollbar-width: none;
