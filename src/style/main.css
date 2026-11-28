@@ -1314,8 +1314,9 @@ h3.scrolly-title {
   p.top-disclaim {
     position: relative;
     text-align: center;
+    top: auto !important;
     margin-top: 0;
-    padding-top: 50px;
+    padding-top: 100px;
   }
 
   .aixa-slide {
