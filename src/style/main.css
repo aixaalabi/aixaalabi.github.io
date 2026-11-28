@@ -1788,7 +1788,16 @@ h3.scrolly-title {
     background: rgba(255, 255, 255, .45);
   }
 
-  .gallery {
+  .container {
+    width: 60%;
+
+    img {
+      width: 100%
+    }
+    .intro-header {
+      width: 100%;
+    }
+
     p {
       margin-top: 20px;
       margin-bottom: 20px;
@@ -1797,19 +1806,8 @@ h3.scrolly-title {
     p:not(.left) {
       margin-bottom: 100px;
     }
-
-    .container {
-      width: 60%;
-
-      img {
-        width: 100%
-      }
-    }
-
-    .intro-header {
-      width: 100%;
-    }
   }
+  
 
   /* Responsive layout */
   @media (max-width: 800px) {
@@ -1849,25 +1847,8 @@ h3.scrolly-title {
       text-align: center;
     }
 
-    .intro-header {
-      width: 100%;
-    }
-    
     .container {
       width: 90%;
-
-      img {
-        width: 100%
-      }
-    
-      p {
-        margin-top: 20px;
-        margin-bottom: 20px;
-      }
-
-      p:not(.left) {
-        margin-bottom: 100px;
-      }
     }
   }
 }
